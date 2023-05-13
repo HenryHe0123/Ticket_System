@@ -80,7 +80,7 @@ namespace my {
 
     //-------------------------------------------------------------------------------
 
-    constexpr int halfBlockSize = 37;
+    constexpr int halfBlockSize = 38;
 
     template<class K, class T>
     class BPTree {
@@ -149,23 +149,23 @@ namespace my {
             int size = 0;
             long fa = 0;
 
-            Element e[Degree + 1]{}; //we store value even in non-leaf node
+            Element e[Degree]{}; //we store value even in non-leaf node
 
-            long ptr[Degree + 2] = {0}; // when node is leaf, ptr[1] points to next leaf, ptr[0] = 0
+            long ptr[Degree + 1] = {0}; // when node is leaf, ptr[1] points to next leaf, ptr[0] = 0
 
             Node() = default;
 
             Node(const Node &n) : size(n.size), fa(n.fa) {
-                memcpy(e, n.e, sizeof(Element) * (Degree + 1));
-                memcpy(ptr, n.ptr, sizeof(long) * (Degree + 2));
+                memcpy(e, n.e, sizeof(Element) * Degree);
+                memcpy(ptr, n.ptr, sizeof(long) * (Degree + 1));
             }
 
             Node &operator=(const Node &n) { //deep copy
                 if (this == &n) return *this;
                 size = n.size;
                 fa = n.fa;
-                memcpy(e, n.e, sizeof(Element) * (Degree + 1));
-                memcpy(ptr, n.ptr, sizeof(long) * (Degree + 2));
+                memcpy(e, n.e, sizeof(Element) * Degree);
+                memcpy(ptr, n.ptr, sizeof(long) * (Degree + 1));
                 return *this;
             }
 
