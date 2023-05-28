@@ -1,13 +1,9 @@
-#ifndef TICKET_SYSTEM_STRING_H
-#define TICKET_SYSTEM_STRING_H
+#ifndef TICKET_SYSTEM_MYSTRING_H
+#define TICKET_SYSTEM_MYSTRING_H
 
-#include <iostream>
 #include <cstring>
-#include "exceptions.hpp"
 
 namespace my {
-
-    using sjtu::error;
 
     template<size_t len = 64>
     class string {
@@ -17,37 +13,30 @@ namespace my {
     public:
         string() = default;
 
-        string(const char *s) {
-            if (strlen(s) > len) error("invalid type conversion from char* to my::string");
-            strcpy(str, s);
-        }
+        explicit string(const char *s) { strcpy(str, s); }
 
         template<size_t len2>
-        string(const string<len2> &s) {
-            if (len2 > len) error("invalid type conversion from my::string to my::string");
-            memcpy(str, s.str, sizeof(str));
-        }
+        explicit string(const my::string<len2> &s) { strcpy(str, s.str); }
 
-        string(const std::string &s) {
-            if (s.size() > len) error("invalid type conversion from std::string to my::string");
-            for (int i = 0; i < s.size(); ++i) str[i] = s[i];
+        explicit string(const std::string &s) {
+            strcpy(str, s.c_str());
         }
 
         string<len> &operator=(const string<len> &s) {
-            if (this != &s) { memcpy(str, s.str, sizeof(str)); }
+            if (this != &s) { strcpy(str, s.str); }
             return *this;
         }
 
         string<len> &operator=(const char *s) {
-            if (strlen(s) > len) error("invalid type conversion from char* to my::string");
             memset(str, 0, sizeof(str));
             strcpy(str, s);
             return *this;
         }
 
         string<len> &operator=(const std::string &s) {
-            if (s.size() > len) error("invalid type conversion from std::string to my::string");
-            for (int i = 0; i < s.size(); ++i) str[i] = s[i];
+            memset(str, 0, sizeof(str));
+            strcpy(str, s.c_str());
+            return *this;
         }
 
         inline char &operator[](const int &i) { return str[i]; }
@@ -70,9 +59,9 @@ namespace my {
 
         friend std::ostream &operator<<(std::ostream &os, const string &tmp) { return os << tmp.str; }
 
-        operator const char *() const { return str; }
+        explicit operator const char *() const { return str; }
 
-        operator std::string() const { return std::string{str}; }
+        explicit operator std::string() const { return std::string{str}; }
 
         //prevent ambiguous compare
         inline bool operator==(const char *s) const { return !strcmp(str, s); }
@@ -97,4 +86,4 @@ namespace my {
 
 }
 
-#endif //TICKET_SYSTEM_STRING_H
+#endif //TICKET_SYSTEM_MYSTRING_H

@@ -15,7 +15,7 @@ namespace my {
     template<class K, class T>
     class multiBPT {
     public:
-        multiBPT(const std::string &name);
+        explicit multiBPT(const std::string &name);
 
         ~multiBPT();
 
@@ -32,9 +32,7 @@ namespace my {
         constexpr static int firstNodeAddress = (sizeof(long) << 1) + sizeof(int);
         //we write root_pos, endAddress and size_ at the beginning of file
 
-        fstream file;
-
-        Node root;
+        std::fstream file;
 
         long root_pos = 0;
         long endAddress = firstNodeAddress;
@@ -153,7 +151,7 @@ namespace my {
                 return e[i] == ele;
             }
 
-        };
+        } root;
 
         inline void readNode(long address, Node &node) {
             file.seekg(address);
@@ -237,7 +235,7 @@ namespace my {
                 file.read(reinterpret_cast<char *>(&root), sizeof(Node));
             }
         } else { //create new file, root_pos = 0
-            file.open(name, ios::out);
+            file.open(name, std::ios::out);
             file.seekp(0);
             file.write(reinterpret_cast<char *>(&root_pos), sizeof(long));
             file.write(reinterpret_cast<char *>(&endAddress), sizeof(long));

@@ -2,20 +2,20 @@
 #define SJTU_EXCEPTIONS_HPP
 
 #include <cstddef>
-#include <cstring>
+#include <exception>
 #include <string>
 
 namespace sjtu {
 
-    class exception {
+    class exception : std::exception {
     protected:
-        std::string detail = "";
+        std::string detail{};
     public:
-        exception() {}
+        exception() = default;
 
-        exception(const exception &e) : detail(e.detail) {}
+        exception(const exception &e) = default;
 
-        exception(const std::string &s) : detail(s) {}
+        explicit exception(std::string s) : detail(std::move(s)) {}
 
         virtual std::string what() { return detail; }
     };
