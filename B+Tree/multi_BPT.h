@@ -1,5 +1,5 @@
-#ifndef TICKET_SYSTEM_BPTREE_H
-#define TICKET_SYSTEM_BPTREE_H
+#ifndef TICKET_SYSTEM_MULTI_BPT_H
+#define TICKET_SYSTEM_MULTI_BPT_H
 
 #include <iostream>
 #include <cstring>
@@ -8,86 +8,16 @@
 #include "../STLite/vector.hpp"
 #include "../STLite/exceptions.hpp"
 
-
 namespace my {
 
-    class string {
-    private:
-        constexpr static int strSize = 64;
-
-        char str[strSize] = {0};
-
-    public:
-        string() = default;
-
-        string(const char *s) { strcpy(str, s); }
-
-        string(const string &s) { memcpy(str, s.str, sizeof(str)); }
-
-        explicit string(const std::string &s) { for (int i = 0; i < s.size(); ++i) str[i] = s[i]; }
-
-        string &operator=(const string &s) {
-            if (this != &s) memcpy(str, s.str, sizeof(str));
-            return *this;
-        }
-
-        string &operator=(const char *s) {
-            memset(str, 0, sizeof(str));
-            strcpy(str, s);
-            return *this;
-        }
-
-        inline char &operator[](const int &i) { return str[i]; }
-
-        inline char operator[](const int &i) const { return str[i]; }
-
-        inline bool operator<(const string &s) const { return strcmp(str, s.str) < 0; }
-
-        inline bool operator>(const string &s) const { return strcmp(str, s.str) > 0; }
-
-        inline bool operator==(const string &s) const { return !strcmp(str, s.str); }
-
-        inline bool operator!=(const string &s) const { return strcmp(str, s.str); }
-
-        inline bool operator<=(const string &s) const { return strcmp(str, s.str) <= 0; }
-
-        inline bool operator>=(const string &s) const { return strcmp(str, s.str) >= 0; }
-
-        friend std::istream &operator>>(std::istream &is, string &tmp) { return is >> tmp.str; }
-
-        friend std::ostream &operator<<(std::ostream &os, const string &tmp) { return os << tmp.str; }
-
-        explicit operator const char *() const { return str; }
-
-        explicit operator std::string() const { return std::string{str}; }
-
-        [[nodiscard]] inline bool empty() const { return !str[0]; }
-
-        //prevent ambiguous compare
-        inline bool operator==(const char *s) const { return !strcmp(str, s); }
-
-        inline bool operator!=(const char *s) const { return strcmp(str, s); }
-
-        inline bool operator>(const char *s) const { return strcmp(str, s) > 0; }
-
-        inline bool operator<(const char *s) const { return strcmp(str, s) < 0; }
-
-        inline bool operator>=(const char *s) const { return strcmp(str, s) >= 0; }
-
-        inline bool operator<=(const char *s) const { return strcmp(str, s) <= 0; }
-
-    };
-
-    //-------------------------------------------------------------------------------
-
-    constexpr int halfBlockSize = 38;
+    constexpr int halfBlockSizeForMulti = 38;
 
     template<class K, class T>
-    class BPTree {
+    class multiBPT {
     public:
-        BPTree(const my::string &name);
+        multiBPT(const std::string &name);
 
-        ~BPTree();
+        ~multiBPT();
 
         void insert(const K &key, const T &value); //do nothing if element already exists
 
@@ -96,7 +26,7 @@ namespace my {
         void find(const K &key, sjtu::vector<T> &output); //return in ascending order,empty if not found
 
     private:
-        constexpr static int Degree = halfBlockSize << 1 | 1; //odd number required here
+        constexpr static int Degree = halfBlockSizeForMulti << 1 | 1; //odd number required here
         //we keep one empty space for split
 
         constexpr static int firstNodeAddress = (sizeof(long) << 1) + sizeof(int);
@@ -292,12 +222,11 @@ namespace my {
     };
 
 
-
     //-----------------------------------core implement--------------------------------------------
 
     template<class K, class T>
-    BPTree<K, T>::BPTree(const my::string &name) { //open file
-        file.open(std::string(name));
+    multiBPT<K, T>::multiBPT(const std::string &name) { //open file
+        file.open(name);
         if (file) {
             file.seekg(0);
             file.read(reinterpret_cast<char *>(&root_pos), sizeof(long));
@@ -308,18 +237,18 @@ namespace my {
                 file.read(reinterpret_cast<char *>(&root), sizeof(Node));
             }
         } else { //create new file, root_pos = 0
-            file.open(std::string(name), ios::out);
+            file.open(name, ios::out);
             file.seekp(0);
             file.write(reinterpret_cast<char *>(&root_pos), sizeof(long));
             file.write(reinterpret_cast<char *>(&endAddress), sizeof(long));
             file.write(reinterpret_cast<char *>(&size_), sizeof(int));
             file.close();
-            file.open(std::string(name));
+            file.open(name);
         }
     }
 
     template<class K, class T>
-    BPTree<K, T>::~BPTree() {
+    multiBPT<K, T>::~multiBPT() {
         file.seekp(0);
         file.write(reinterpret_cast<char *>(&root_pos), sizeof(long));
         file.write(reinterpret_cast<char *>(&endAddress), sizeof(long));
@@ -328,7 +257,7 @@ namespace my {
     }
 
     template<class K, class T>
-    void BPTree<K, T>::find(const K &key, sjtu::vector<T> &output) {
+    void multiBPT<K, T>::find(const K &key, sjtu::vector<T> &output) {
         output.clear();
         if (size_ == 0) return;
         Node tmp;
@@ -347,7 +276,7 @@ namespace my {
     }
 
     template<class K, class T>
-    void BPTree<K, T>::insert(const K &key, const T &value) {
+    void multiBPT<K, T>::insert(const K &key, const T &value) {
         Element ele(key, value);
         if (root_pos == 0) { //empty Tree
             if (size_) {
@@ -380,11 +309,11 @@ namespace my {
             writeNode(tmp_pos, tmp);
         } else { //we have to split node now
             Node newLeaf; //at right
-            newLeaf.size = tmp.size - halfBlockSize;
-            tmp.size = halfBlockSize;
+            newLeaf.size = tmp.size - halfBlockSizeForMulti;
+            tmp.size = halfBlockSizeForMulti;
             for (int j = 0; j < newLeaf.size; ++j) {
-                newLeaf.e[j] = tmp.e[halfBlockSize + j];
-                tmp.e[halfBlockSize + j] = Element();
+                newLeaf.e[j] = tmp.e[halfBlockSizeForMulti + j];
+                tmp.e[halfBlockSizeForMulti + j] = Element();
             }
             newLeaf.fa = tmp.fa;
             newLeaf.ptr[1] = tmp.ptr[1];
@@ -397,7 +326,7 @@ namespace my {
     }
 
     template<class K, class T>
-    void BPTree<K, T>::insertInternal(long curAddr, long rightAddr, const BPTree::Element &ele) {
+    void multiBPT<K, T>::insertInternal(long curAddr, long rightAddr, const multiBPT::Element &ele) {
         if (curAddr == 0) { //new root
             Node newNode;
             newNode.size = 1;
@@ -439,19 +368,19 @@ namespace my {
             writeNode(curAddr, curNode);
         else { //split interval node
             Node newNode;
-            Element newEle = curNode.e[halfBlockSize];
-            newNode.size = curNode.size - halfBlockSize - 1;
-            curNode.size = halfBlockSize;
+            Element newEle = curNode.e[halfBlockSizeForMulti];
+            newNode.size = curNode.size - halfBlockSizeForMulti - 1;
+            curNode.size = halfBlockSizeForMulti;
             newNode.fa = curNode.fa;
             for (int j = 0; j < newNode.size; ++j) {
-                newNode.e[j] = curNode.e[halfBlockSize + 1 + j];
-                newNode.ptr[j] = curNode.ptr[halfBlockSize + 1 + j];
-                curNode.e[halfBlockSize + 1 + j] = Element();
-                curNode.ptr[halfBlockSize + 1 + j] = 0;
+                newNode.e[j] = curNode.e[halfBlockSizeForMulti + 1 + j];
+                newNode.ptr[j] = curNode.ptr[halfBlockSizeForMulti + 1 + j];
+                curNode.e[halfBlockSizeForMulti + 1 + j] = Element();
+                curNode.ptr[halfBlockSizeForMulti + 1 + j] = 0;
             }
             newNode.ptr[newNode.size] = curNode.ptr[Degree];
             curNode.ptr[Degree] = 0;
-            curNode.e[halfBlockSize] = Element();
+            curNode.e[halfBlockSizeForMulti] = Element();
 
             Node son; //debug: don't forget to change son's father!
             for (int j = 0; j <= newNode.size; ++j) {
@@ -468,7 +397,7 @@ namespace my {
     }
 
     template<class K, class T>
-    bool BPTree<K, T>::erase(const K &key, const T &value) {
+    bool multiBPT<K, T>::erase(const K &key, const T &value) {
         if (size_ == 0) return false;
         Element ele(key, value);
         Node tmp;
@@ -491,7 +420,7 @@ namespace my {
             }
             //now tmp != root
             removeVal(i, tmp);
-            if (tmp.size >= halfBlockSize) {
+            if (tmp.size >= halfBlockSizeForMulti) {
                 writeNode(tmp_pos, tmp);
                 return true;
             }
@@ -501,7 +430,7 @@ namespace my {
     }
 
     template<class K, class T>
-    void BPTree<K, T>::eraseAdjust(long address, BPTree::Node &node) { //node is a leaf and not root
+    void multiBPT<K, T>::eraseAdjust(long address, multiBPT::Node &node) { //node is a leaf and not root
         Node tmp;
         Node &faNode = (node.fa == root_pos) ? root : tmp;
         if (node.fa != root_pos) readNode(node.fa, faNode);
@@ -514,7 +443,7 @@ namespace my {
         Node rightNode;
         if (right_pos) { //check if borrow from right available
             readNode(right_pos, rightNode);
-            if (rightNode.size > halfBlockSize) { //borrow successfully
+            if (rightNode.size > halfBlockSizeForMulti) { //borrow successfully
                 node.e[node.size++] = rightNode.e[0];
                 removeVal(0, rightNode);
                 faNode.e[i + 1] = rightNode.e[0];
@@ -527,7 +456,7 @@ namespace my {
         Node leftNode;
         if (left_pos) { //check if borrow from left available
             readNode(left_pos, leftNode);
-            if (leftNode.size > halfBlockSize) { //borrow successfully
+            if (leftNode.size > halfBlockSizeForMulti) { //borrow successfully
                 insertVal(0, leftNode.e[--leftNode.size], node);
                 leftNode.e[leftNode.size] = Element();
                 faNode.e[i] = node.e[0];
@@ -571,7 +500,7 @@ namespace my {
     }
 
     template<class K, class T>
-    void BPTree<K, T>::eraseAdjustInternal(long address, BPTree::Node &node) { //node maybe &root
+    void multiBPT<K, T>::eraseAdjustInternal(long address, multiBPT::Node &node) { //node maybe &root
         if (node.fa == 0) { //root node
             if (root_pos != address) {
                 std::cout << "erase adjust internal error: root chaos" << std::endl;
@@ -587,7 +516,7 @@ namespace my {
             return;
         }
         //now node not root
-        if (node.size >= halfBlockSize) return;
+        if (node.size >= halfBlockSizeForMulti) return;
         Node tmp;
         Node &faNode = (node.fa == root_pos) ? root : tmp;
         if (node.fa != root_pos) readNode(node.fa, faNode);
@@ -599,7 +528,7 @@ namespace my {
         Node rightNode;
         if (right_pos) { //check if borrow from right available
             readNode(right_pos, rightNode);
-            if (rightNode.size > halfBlockSize) { //borrow successfully
+            if (rightNode.size > halfBlockSizeForMulti) { //borrow successfully
                 Node son;
                 readNode(rightNode.ptr[0], son);
                 node.e[node.size++] = faNode.e[i + 1]; //not rightNode.e[0]
@@ -622,7 +551,7 @@ namespace my {
         Node leftNode;
         if (left_pos) { //check if borrow from left available
             readNode(left_pos, leftNode);
-            if (leftNode.size > halfBlockSize) { //borrow successfully
+            if (leftNode.size > halfBlockSizeForMulti) { //borrow successfully
                 Node son;
                 readNode(leftNode.ptr[leftNode.size], son);
                 node.ptr[node.size + 1] = node.ptr[node.size];
@@ -709,4 +638,4 @@ namespace my {
 
 }
 
-#endif //TICKET_SYSTEM_BPTREE_H
+#endif //TICKET_SYSTEM_MULTI_BPT_H
