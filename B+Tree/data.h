@@ -42,7 +42,7 @@ namespace my {
     template<class value_type>
     class Data : public File<value_type> {
     public:
-        Data(const char *name) : File<value_type>(name) {}
+        explicit Data(const std::string &name) : File<value_type>(name) {}
 
         ~Data() { this->file.close(); }
 
@@ -76,9 +76,15 @@ namespace my {
 
         ~File() { file.close(); }
 
-        void add(const value_type &value); //add a new value at the end of the file
+        long add(const value_type &value); //add a new value at the end of the file and return address
+
+        void write(long address, const value_type &value); //must use legal address
+
+        void read(long address, value_type &value); //must use legal address
 
         void del(); //delete the last value of the file, do nothing if the file is empty
+
+        virtual void clear();
 
         bool empty();
 
@@ -113,7 +119,7 @@ namespace my {
     }
 
     template<class value_type>
-    void File<value_type>::add(const value_type &value) {
+    long File<value_type>::add(const value_type &value) {
         file.seekg(0);
         long endAddress = 0;
         file.read(reinterpret_cast <char *> (&endAddress), sizeof(long));
@@ -122,6 +128,19 @@ namespace my {
         endAddress += sizeof(value_type);
         file.seekp(0);
         file.write(reinterpret_cast <char *> (&endAddress), sizeof(long));
+        return endAddress - sizeof(value_type);
+    }
+
+    template<class value_type>
+    void File<value_type>::write(long address, const value_type &value) {
+        file.seekp(address);
+        file.write(reinterpret_cast <const char *> (&value), sizeof(value_type));
+    }
+
+    template<class value_type>
+    void File<value_type>::read(long address, value_type &value) {
+        file.seekg(address);
+        file.read(reinterpret_cast <char *> (&value), sizeof(value_type));
     }
 
     template<class value_type>
@@ -132,6 +151,13 @@ namespace my {
         if (endAddress == sizeof(long)) return;
         endAddress -= sizeof(value_type);
         file.seekp(0);
+        file.write(reinterpret_cast <char *> (&endAddress), sizeof(long));
+    }
+
+    template<class value_type>
+    void File<value_type>::clear() {
+        file.seekp(0);
+        long endAddress = sizeof(long);
         file.write(reinterpret_cast <char *> (&endAddress), sizeof(long));
     }
 
