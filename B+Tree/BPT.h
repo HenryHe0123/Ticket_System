@@ -13,7 +13,7 @@ namespace my {
 
     using sjtu::error;
 
-    constexpr int halfBlockSize = 50;
+    constexpr int halfBlockSize = 5;
 
     template<class K, class T>
     class BPT {
@@ -68,41 +68,6 @@ namespace my {
         int size_ = 0;
 
         File<T> data;
-
-        struct Element {
-            K key{};
-            T value{};
-
-            Element() = default;
-
-            Element(const K &k, const T &v) : key(k), value(v) {}
-
-            explicit Element(const K &k) : key(k) {}
-
-            bool operator<(const Element &e) const {
-                if (key == e.key) return value < e.value;
-                else return key < e.key;
-            }
-
-            bool operator<=(const Element &e) const {
-                if (key == e.key) return value <= e.value;
-                else return key < e.key;
-            }
-
-            bool operator>(const Element &e) const {
-                if (key == e.key) return value > e.value;
-                else return key > e.key;
-            }
-
-            bool operator>=(const Element &e) const {
-                if (key == e.key) return value >= e.value;
-                else return key > e.key;
-            }
-
-            bool operator==(const Element &e) const { return key == e.key && value == e.value; }
-
-            bool operator!=(const Element &e) const { return key != e.key || value != e.value; }
-        };
 
         struct Node {
             bool isLeaf = true; //new created as leaf
@@ -275,8 +240,10 @@ namespace my {
         long tmp_pos = findLeafNode(key, tmp);
 
         int i = tmp.lowerBound(key);
-        if (tmp.k[i] == key && i != tmp.size) return;
-        else size_++; //(will) insert successfully
+        if (tmp.k[i] == key && i != tmp.size) { //key already exist
+            data.write(tmp.ptr[i], value); //replace
+            return;
+        } else size_++; //insert new element
 
         for (int j = tmp.size; j > i; --j) { //size not updated
             tmp.k[j] = tmp.k[j - 1];
@@ -351,6 +318,7 @@ namespace my {
             writeNode(curAddr, curNode);
         else { //split interval node
             Node newNode;
+            newNode.isLeaf = false; //not leaf node!
             K newKey = curNode.k[halfBlockSize];
             newNode.size = curNode.size - halfBlockSize - 1;
             curNode.size = halfBlockSize;
@@ -431,9 +399,9 @@ namespace my {
         if (left_pos) { //check if borrow from left available
             readNode(left_pos, leftNode);
             if (leftNode.size > halfBlockSize) { //borrow successfully
-                for (int j = node.size++; i > 0; --i) {
-                    node.k[i] = node.k[i - 1];
-                    node.ptr[i] = node.ptr[i - 1];
+                for (int j = node.size++; j > 0; --j) {
+                    node.k[j] = node.k[j - 1];
+                    node.ptr[j] = node.ptr[j - 1];
                 }
                 leftNode.size--;
                 node.k[0] = leftNode.k[leftNode.size];
