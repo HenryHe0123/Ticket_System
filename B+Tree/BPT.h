@@ -13,8 +13,6 @@ namespace my {
 
     using sjtu::error;
 
-    constexpr int halfBlockSize = 5;
-
     template<class K, class T>
     class BPT {
     public:
@@ -28,6 +26,7 @@ namespace my {
 
         bool find(const K &key, T &output); //return false if element no find (no change to output)
 
+        /*
         void showAllElements() { //for debug use
             std::cout << "debug: show all elements---------------\n";
             Node tmp = root();
@@ -53,8 +52,11 @@ namespace my {
             }
             std::cout << "showing finished----------------------\n" << std::endl;
         }
+         */
 
     private:
+        constexpr static int halfBlockSize = 1950 / (sizeof(long) + sizeof(K));
+
         constexpr static int Degree = halfBlockSize << 1 | 1; //odd number required here
         //we keep one empty space for split
 

@@ -10,7 +10,6 @@
 
 namespace my {
 
-    constexpr int halfBlockSizeForMulti = 38;
 
     template<class K, class T>
     class multiBPT {
@@ -26,6 +25,8 @@ namespace my {
         void find(const K &key, sjtu::vector<T> &output); //return in ascending order,empty if not found
 
     private:
+        constexpr static int halfBlockSizeForMulti = 1950 / (sizeof(long) + sizeof(K) + sizeof(T));
+
         constexpr static int Degree = halfBlockSizeForMulti << 1 | 1; //odd number required here
         //we keep one empty space for split
 
