@@ -28,6 +28,32 @@ namespace my {
 
         bool find(const K &key, T &output); //return false if element no find (no change to output)
 
+        void showAllElements() { //for debug use
+            std::cout << "debug: show all elements---------------\n";
+            Node tmp = root();
+            int v;
+            while (!tmp.isLeaf)
+                readNode(tmp.ptr[0], tmp);
+
+            //std::cout << "fa_pos: " << tmp.fa << "   ";
+            for (int i = 0; i < tmp.size; ++i) {
+                data.read(tmp.ptr[i], v);
+                std::cout << tmp.k[i] << '+' << v << "   ";
+            }
+            std::cout << '\n';
+
+            while (tmp.ptr[Degree]) {
+                readNode(tmp.ptr[Degree], tmp);
+                //std::cout << "fa_pos: " << tmp.fa << "   ";
+                for (int i = 0; i < tmp.size; ++i) {
+                    data.read(tmp.ptr[i], v);
+                    std::cout << tmp.k[i] << '+' << v << "   ";
+                }
+                std::cout << '\n';
+            }
+            std::cout << "showing finished----------------------\n" << std::endl;
+        }
+
     private:
         constexpr static int Degree = halfBlockSize << 1 | 1; //odd number required here
         //we keep one empty space for split
@@ -163,26 +189,23 @@ namespace my {
 
         void insertInternal(long curAddr, long rightAddr, const K &key);
 
-        //todo
-
-        static inline void removeVal(int index, Node &node) { //remove e[index] from node (no change for ptr)
+        static inline void removeLeafVal(int index, Node &node) { //remove element[index] from a leaf node
             if (node.size == 0) return;
-            for (int i = index; i < node.size - 1; ++i)
+            for (int i = index; i < node.size - 1; ++i) {
                 node.k[i] = node.k[i + 1];
-            node.k[--node.size] = K();
-        }
-
-        static inline void insertVal(int index, const Element &e, Node &node) { //insert e to node.e[index]
-            for (int i = node.size++; i > index; --i) node.e[i] = node.e[i - 1];
-            node.e[index] = e;
+                node.ptr[i] = node.ptr[i + 1];
+            }
+            node.ptr[--node.size] = 0;
         }
 
         static inline void mergeLeafNode(Node &left, const Node &right) { //merge right node to left
             //node right remain unchanged, which is going to be discarded
-            for (int j = 0; j < right.size; ++j)
-                left.e[left.size + j] = right.e[j];
+            for (int j = 0; j < right.size; ++j) {
+                left.k[left.size + j] = right.k[j];
+                left.ptr[left.size + j] = right.ptr[j];
+            }
             left.size += right.size;
-            left.ptr[1] = right.ptr[1];
+            left.ptr[Degree] = right.ptr[Degree];
         }
 
         void eraseAdjust(long address, Node &node);
@@ -229,7 +252,7 @@ namespace my {
         Node tmp;
         findLeafNode(key, tmp);
         int i = tmp.lowerBound(key);
-        if (i == tmp.size) return false;
+        if (tmp.k[i] != key || i == tmp.size) return false;
         data.read(tmp.ptr[i], output);
         return true;
     }
@@ -356,48 +379,36 @@ namespace my {
         }
     }
 
-    /*
     template<class K, class T>
-    bool BPT<K, T>::erase(const K &key, const T &value) {
+    bool BPT<K, T>::erase(const K &key) {
         if (size_ == 0) return false;
-        Element ele(key, value);
         Node tmp;
-        long tmp_pos = findLeafNode(ele, tmp); //tmp is a leaf node
-        int i = tmp.lowerBound(ele);
-        if (tmp.e[i] != ele || i == tmp.size) return false; //element no found
-        else { //tmp.e[i] = ele
+        long tmp_pos = findLeafNode(key, tmp); //tmp is a leaf node
+        int i = tmp.lowerBound(key);
+        if (tmp.k[i] != key || i == tmp.size) return false; //element no found
+        else { //tmp.k[i] = key
             size_--;
-            if (tmp_pos == root_pos) { //root as leaf, only root node
-                if (size_ == 0) { //clear tree
-                    writeNode(root_pos, Node());
-                    root = Node();
-                    root_pos = 0;
-                    endAddress = firstNodeAddress;
-                } else {
-                    removeVal(i, root);
-                    writeNode(root_pos, root);
-                }
+            //data.delete(tmp.ptr[i])
+            if (size_ == 0) { //clear tree
+                root_pos = 0;
+                endAddress = firstNodeAddress;
                 return true;
             }
-            //now tmp != root
-            removeVal(i, tmp);
-            if (tmp.size >= halfBlockSize) {
+            removeLeafVal(i, tmp);
+            if (tmp.size >= halfBlockSize || tmp_pos == root_pos) {
                 writeNode(tmp_pos, tmp);
                 return true;
             }
-            eraseAdjust(tmp_pos, tmp);
+            eraseAdjust(tmp_pos, tmp); //tmp not root
             return true;
         }
     }
 
     template<class K, class T>
     void BPT<K, T>::eraseAdjust(long address, BPT::Node &node) { //node is a leaf and not root
-        Node tmp;
-        Node &faNode = (node.fa == root_pos) ? root : tmp;
-        if (node.fa != root_pos) readNode(node.fa, faNode);
-        //faNode maybe root!
-
-        int i = faNode.upperBound(node.e[0]) - 1; //maybe -1
+        Node faNode;
+        readNode(node.fa, faNode);
+        int i = faNode.upperBound(node.k[0]) - 1; //maybe -1
         long right_pos = 0, left_pos = 0;
         if (i != faNode.size - 1) right_pos = faNode.ptr[i + 2];
         if (i >= 0) left_pos = faNode.ptr[i];
@@ -405,9 +416,11 @@ namespace my {
         if (right_pos) { //check if borrow from right available
             readNode(right_pos, rightNode);
             if (rightNode.size > halfBlockSize) { //borrow successfully
-                node.e[node.size++] = rightNode.e[0];
-                removeVal(0, rightNode);
-                faNode.e[i + 1] = rightNode.e[0];
+                node.k[node.size] = rightNode.k[0];
+                node.ptr[node.size] = rightNode.ptr[0];
+                node.size++;
+                removeLeafVal(0, rightNode);
+                faNode.k[i + 1] = rightNode.k[0];
                 writeNode(node.fa, faNode);
                 writeNode(address, node);
                 writeNode(right_pos, rightNode);
@@ -418,9 +431,14 @@ namespace my {
         if (left_pos) { //check if borrow from left available
             readNode(left_pos, leftNode);
             if (leftNode.size > halfBlockSize) { //borrow successfully
-                insertVal(0, leftNode.e[--leftNode.size], node);
-                leftNode.e[leftNode.size] = Element();
-                faNode.e[i] = node.e[0];
+                for (int j = node.size++; i > 0; --i) {
+                    node.k[i] = node.k[i - 1];
+                    node.ptr[i] = node.ptr[i - 1];
+                }
+                leftNode.size--;
+                node.k[0] = leftNode.k[leftNode.size];
+                node.ptr[0] = leftNode.ptr[leftNode.size];
+                faNode.k[i] = node.k[0];
                 writeNode(node.fa, faNode);
                 writeNode(address, node);
                 writeNode(left_pos, leftNode);
@@ -432,57 +450,55 @@ namespace my {
             //merge rightNode to node
             mergeLeafNode(node, rightNode);
             for (int j = i + 1; j < faNode.size - 1; ++j) {
-                faNode.e[j] = faNode.e[j + 1];
+                faNode.k[j] = faNode.k[j + 1];
                 faNode.ptr[j + 1] = faNode.ptr[j + 2];
             }
             --faNode.size;
-            faNode.e[faNode.size] = Element();
             faNode.ptr[faNode.size + 1] = 0;
             writeNode(node.fa, faNode);
             writeNode(address, node);
-            writeNode(right_pos, Node());
+            //writeNode(right_pos, Node());
         } else if (left_pos) {
             mergeLeafNode(leftNode, node);
             for (int j = i; j < faNode.size - 1; ++j) {
-                faNode.e[j] = faNode.e[j + 1];
+                faNode.k[j] = faNode.k[j + 1];
                 faNode.ptr[j + 1] = faNode.ptr[j + 2];
             }
             --faNode.size;
-            faNode.e[faNode.size] = Element();
             faNode.ptr[faNode.size + 1] = 0;
             writeNode(node.fa, faNode);
             writeNode(left_pos, leftNode);
-            writeNode(address, Node());
+            //writeNode(address, Node());
         } else {
-            std::cout << "erase adjust error: no siblings" << std::endl;
+            std::cout << "BPT erase adjust error: no siblings" << std::endl;
             throw sjtu::bpt_error();
         } //safety check
         eraseAdjustInternal(node.fa, faNode); //faNode size -1
     }
 
     template<class K, class T>
-    void BPT<K, T>::eraseAdjustInternal(long address, BPT::Node &node) { //node maybe &root
+    void BPT<K, T>::eraseAdjustInternal(long address, BPT::Node &node) {
         if (node.fa == 0) { //root node
             if (root_pos != address) {
-                std::cout << "erase adjust internal error: root chaos" << std::endl;
+                std::cout << "BPT erase adjust internal error: root chaos" << std::endl;
                 throw sjtu::bpt_error();
             } //safety check
             if (node.size == 0) { //erase empty root
                 root_pos = node.ptr[0];
-                readNode(root_pos, root);
-                root.fa = 0;
-                writeNode(root_pos, root);
-                writeNode(address, Node());
-            } else if (&node != &root) root = node;
+                Node newRoot;
+                readNode(root_pos, newRoot);
+                newRoot.fa = 0;
+                //no need to change isLeaf
+                writeNode(root_pos, newRoot);
+                //writeNode(address, Node());
+            }
             return;
         }
         //now node not root
         if (node.size >= halfBlockSize) return;
-        Node tmp;
-        Node &faNode = (node.fa == root_pos) ? root : tmp;
-        if (node.fa != root_pos) readNode(node.fa, faNode);
-
-        int i = faNode.upperBound(node.e[0]) - 1; //maybe -1
+        Node faNode;
+        readNode(node.fa, faNode);
+        int i = faNode.upperBound(node.k[0]) - 1; //maybe -1
         long right_pos = 0, left_pos = 0;
         if (i != faNode.size - 1) right_pos = faNode.ptr[i + 2];
         if (i >= 0) left_pos = faNode.ptr[i];
@@ -492,12 +508,12 @@ namespace my {
             if (rightNode.size > halfBlockSize) { //borrow successfully
                 Node son;
                 readNode(rightNode.ptr[0], son);
-                node.e[node.size++] = faNode.e[i + 1]; //not rightNode.e[0]
+                node.k[node.size++] = faNode.k[i + 1]; //not rightNode.k[0]
                 node.ptr[node.size] = rightNode.ptr[0];
                 son.fa = address;
-                faNode.e[i + 1] = rightNode.e[0];
+                faNode.k[i + 1] = rightNode.k[0];
                 for (int j = 1; j <= rightNode.size; ++j) {
-                    rightNode.e[j - 1] = rightNode.e[j];
+                    rightNode.k[j - 1] = rightNode.k[j];
                     rightNode.ptr[j - 1] = rightNode.ptr[j];
                 }
                 rightNode.ptr[rightNode.size--] = 0;
@@ -517,16 +533,16 @@ namespace my {
                 readNode(leftNode.ptr[leftNode.size], son);
                 node.ptr[node.size + 1] = node.ptr[node.size];
                 for (int j = node.size; j > 0; --j) {
-                    node.e[j] = node.e[j - 1];
+                    node.k[j] = node.k[j - 1];
                     node.ptr[j] = node.ptr[j - 1];
                 }
-                node.e[0] = faNode.e[i];
+                node.k[0] = faNode.k[i];
                 node.ptr[0] = leftNode.ptr[leftNode.size];
                 node.size++;
                 son.fa = address;
-                faNode.e[i] = leftNode.e[leftNode.size - 1];
+                faNode.k[i] = leftNode.k[leftNode.size - 1];
                 leftNode.size--;
-                leftNode.e[leftNode.size] = Element();
+                //leftNode.e[leftNode.size] = Element();
                 leftNode.ptr[leftNode.size + 1] = 0;
 
                 writeNode(node.fa, faNode);
@@ -539,14 +555,14 @@ namespace my {
         //cannot borrow, we have to merge now
         if (right_pos) {
             //merge rightNode to node
-            node.e[node.size] = faNode.e[i + 1];
+            node.k[node.size] = faNode.k[i + 1];
             node.ptr[node.size + 1] = rightNode.ptr[0];
             Node son;
             readNode(rightNode.ptr[0], son);
             son.fa = address;
             writeNode(rightNode.ptr[0], son);
             for (int j = 0; j < rightNode.size; ++j) {
-                node.e[node.size + 1 + j] = rightNode.e[j];
+                node.k[node.size + 1 + j] = rightNode.k[j];
                 node.ptr[node.size + 2 + j] = rightNode.ptr[j + 1];
                 readNode(rightNode.ptr[j + 1], son);
                 son.fa = address;
@@ -555,24 +571,24 @@ namespace my {
             node.size += rightNode.size + 1;
 
             for (int j = i + 1; j < faNode.size - 1; ++j) {
-                faNode.e[j] = faNode.e[j + 1];
+                faNode.k[j] = faNode.k[j + 1];
                 faNode.ptr[j + 1] = faNode.ptr[j + 2];
             }
             --faNode.size;
-            faNode.e[faNode.size] = Element();
+            //faNode.e[faNode.size] = Element();
             faNode.ptr[faNode.size + 1] = 0;
             writeNode(node.fa, faNode);
             writeNode(address, node);
-            writeNode(right_pos, Node());
+            //writeNode(right_pos, Node());
         } else if (left_pos) {
-            leftNode.e[leftNode.size] = faNode.e[i];
+            leftNode.k[leftNode.size] = faNode.k[i];
             leftNode.ptr[leftNode.size + 1] = node.ptr[0];
             Node son;
             readNode(node.ptr[0], son);
             son.fa = left_pos;
             writeNode(node.ptr[0], son);
             for (int j = 0; j < node.size; ++j) {
-                leftNode.e[leftNode.size + 1 + j] = node.e[j];
+                leftNode.k[leftNode.size + 1 + j] = node.k[j];
                 leftNode.ptr[leftNode.size + 2 + j] = node.ptr[j + 1];
                 readNode(node.ptr[j + 1], son);
                 son.fa = left_pos;
@@ -581,22 +597,21 @@ namespace my {
             leftNode.size += node.size + 1;
 
             for (int j = i; j < faNode.size - 1; ++j) {
-                faNode.e[j] = faNode.e[j + 1];
+                faNode.k[j] = faNode.k[j + 1];
                 faNode.ptr[j + 1] = faNode.ptr[j + 2];
             }
             --faNode.size;
-            faNode.e[faNode.size] = Element();
+            //faNode.e[faNode.size] = Element();
             faNode.ptr[faNode.size + 1] = 0;
             writeNode(node.fa, faNode);
             writeNode(left_pos, leftNode);
-            writeNode(address, Node());
+            //writeNode(address, Node());
         } else {
             std::cout << "erase adjust internal error: no siblings" << std::endl;
             throw sjtu::bpt_error();
         } //safety check
         eraseAdjustInternal(node.fa, faNode);
     }
-    */
 
 }
 
