@@ -2,6 +2,13 @@
 #define TICKET_SYSTEM_ALGORITHM_H
 
 template<class T>
+void swap(T &x, T &y) {
+    T tmp = x;
+    x = y;
+    y = tmp;
+}
+
+template<class T>
 void mergesort(T *a, int begin, int end) { //[begin,end], from big to small
     if (begin >= end) return;
     int mid = (begin + end) >> 1;
@@ -28,9 +35,9 @@ void quicksort(T a[], int begin, int end) { //[begin,end], from small to big
     while (i < j) {
         while (i < j && a[j] >= flag) --j;
         while (i < j && a[i] <= flag) ++i;
-        std::swap(a[i], a[j]);
+        swap(a[i], a[j]);
     } //i=j
-    std::swap(a[i], a[begin]);
+    swap(a[i], a[begin]);
     quicksort(a, begin, i - 1);
     quicksort(a, i + 1, end);
 }

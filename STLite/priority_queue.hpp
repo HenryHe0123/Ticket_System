@@ -4,15 +4,9 @@
 #include <cstddef>
 #include <functional>
 #include "exceptions.hpp"
+#include "algorithm.h"
 
 namespace sjtu {
-
-    template<typename T>
-    void swap(T &x, T &y) {
-        T tmp = x;
-        x = y;
-        y = tmp;
-    }
 
 /**
  * a container like std::priority_queue which is a heap internal.
