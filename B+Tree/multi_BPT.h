@@ -8,8 +8,28 @@
 #include "../STLite/vector.hpp"
 #include "../STLite/exceptions.hpp"
 
-namespace my {
+/*
+ * Class: my::multiBPT
+ * ---------------------
+ * This class similarly implements the functions of multimap.
+ * Typical usage of which looks like this:
+ *
+ *    multiBPT<key_type,value_type> multimap("file");
+ *
+ *    multimap.insert(key,value); //do nothing if element already exists
+ *
+ *    multimap.erase(key,value); //return false if element not found
+ *
+ *    vector<value_type> output; //receive output in ascending order
+ *    multimap.find(key,output);
+ *
+ *    if(multimap.empty()) {...}
+ *
+ *    int size = multimap.size();
+ *
+ */
 
+namespace my {
 
     template<class K, class T>
     class multiBPT {
@@ -23,6 +43,10 @@ namespace my {
         bool erase(const K &key, const T &value); //return false if element not found
 
         void find(const K &key, sjtu::vector<T> &output); //return in ascending order,empty if not found
+
+        size_t size() { return size_; }
+
+        bool empty() { return size_ == 0; }
 
     private:
         constexpr static int halfBlockSizeForMulti = 1950 / (sizeof(long) + sizeof(K) + sizeof(T));

@@ -1,6 +1,3 @@
-/**
- * implement a container like std::map
- */
 #ifndef SJTU_MAP_HPP
 #define SJTU_MAP_HPP
 
@@ -11,20 +8,6 @@
 #include "exceptions.hpp"
 
 namespace sjtu {
-
-    template<typename T>
-    struct my_type_traits{
-        using iterator_assignable = typename T::iterator_assignable;
-    };
-
-    struct my_true_type{
-       static const bool id = true;
-    };
-
-    struct my_false_type{
-        static const bool id = false;
-    };
-
 
     template<
             class Key,
@@ -316,8 +299,8 @@ namespace sjtu {
 
         class iterator {
             friend class map;
+
         public:
-            using iterator_assignable = my_true_type;
 
         private:
             /**
@@ -403,8 +386,8 @@ namespace sjtu {
 
         class const_iterator {
             friend class map;
+
         public:
-            using iterator_assignable = my_false_type;
             // it should has similar member method as iterator.
             //  and it should be able to construct from an iterator.
         private:
