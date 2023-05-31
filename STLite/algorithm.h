@@ -1,6 +1,65 @@
 #ifndef TICKET_SYSTEM_ALGORITHM_H
 #define TICKET_SYSTEM_ALGORITHM_H
 
+#include <cstring>
+#include "exceptions.hpp"
+
+template<size_t N, class T>
+struct HashMap {
+    //need extra hash function
+    //the original hash_value should not be same
+private:
+    int begin[N]{0}, next[N]{0}, id[N]{0}, waste[N]{0}, node_cnt = 0, waste_top = 0;
+    //id[i] for original hash_value
+    T val[N]{};
+public:
+    HashMap() = default;
+
+    void clear() {
+        memset(begin, 0, sizeof(begin));
+        memset(next, 0, sizeof(next));
+        memset(id, 0, sizeof(id));
+        memset(waste, 0, sizeof(waste));
+        node_cnt = waste_top = 0;
+    }
+
+    void insert(int hash, const T &v) {
+        int tmp = hash % N;
+        int now = waste_top ? waste[waste_top--] : ++node_cnt;
+        val[now] = v;
+        next[now] = begin[tmp];
+        begin[tmp] = now;
+        id[now] = hash;
+    }
+
+    void del(int hash, const T &v) {
+        int tmp = hash % N, pre = 0;
+        for (int i = begin[tmp]; i; i = next[i]) {
+            if (id[i] == hash) {
+                if (val[i] == v) { //delete i
+                    if (pre) next[pre] = next[i];
+                    else begin[tmp] = next[i];
+                    waste[++waste_top] = i;
+                    return;
+                } else sjtu::error("HashMap delete error: v and hash not correspond");
+            }
+            pre = i;
+        }
+    }
+
+    bool has(int hash) {
+        int tmp = hash % N;
+        for (int i = begin[tmp]; i; i = next[i]) if (id[i] == hash) return true;
+        return false;
+    }
+
+    T *query(int hash) {
+        int tmp = hash % N;
+        for (int i = begin[tmp]; i; i = next[i]) if (id[i] == hash) return val + i;
+        return nullptr;
+    }
+};
+
 template<class T>
 void swap(T &x, T &y) {
     T tmp = x;
