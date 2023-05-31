@@ -9,6 +9,34 @@
 #include "../STLite/exceptions.hpp"
 #include "data.h"
 
+/*
+ * Class: my::BPT
+ * ---------------------
+ * This class similarly implements the functions of map.
+ * Typical usage of which looks like this:
+ *
+ *    BPT<key_type,value_type> map("file");
+ *
+ *    map.assign(key,value); //override if element already exists
+ *
+ *    map.erase(key); //return false if key not found
+ *
+ *    value_type v;
+ *    map.find(key,v); //return false if key not found (v stay unchanged)
+ *
+ *    if(map.count(key)) {...}
+ *
+ *    if(map.empty()) {...}
+ *
+ *    tmp_value = map[key];
+ *
+ *    void func(const key_type &,const value_type &);
+ *    map.executeAll(func);
+ *
+ *    int size = map.size();
+ *
+ */
+
 namespace my {
 
     using sjtu::error;
@@ -20,11 +48,21 @@ namespace my {
 
         ~BPT();
 
-        void insert(const K &key, const T &value); //replace if element already exists
+        void assign(const K &key, const T &value);
 
         bool erase(const K &key); //return false if element not found
 
         bool find(const K &key, T &output); //return false if element no find (no change to output)
+
+        T operator[](const K &key); //throw error if key no find
+
+        bool count(const K &key);
+
+        size_t size() { return size_; }
+
+        bool empty() { return size_ == 0; }
+
+        void executeAll(void (*func)(const K &key, const T &value));
 
         /*
         void showAllElements() { //for debug use
@@ -181,6 +219,25 @@ namespace my {
 
     };
 
+    template<class K, class T>
+    void BPT<K, T>::executeAll(void (*func)(const K &, const T &)) {
+        Node tmp = root();
+        int v;
+        while (!tmp.isLeaf)
+            readNode(tmp.ptr[0], tmp);
+        //now tmp is the first leaf
+        for (int i = 0; i < tmp.size; ++i) {
+            data.read(tmp.ptr[i], v);
+            func(tmp.k[i],v);
+        }
+        while (tmp.ptr[Degree]) {
+            readNode(tmp.ptr[Degree], tmp);
+            for (int i = 0; i < tmp.size; ++i) {
+                data.read(tmp.ptr[i], v);
+                func(tmp.k[i],v);
+            }
+        }
+    }
 
     //-----------------------------------core implement--------------------------------------------
 
@@ -225,7 +282,27 @@ namespace my {
     }
 
     template<class K, class T>
-    void BPT<K, T>::insert(const K &key, const T &value) {
+    T BPT<K, T>::operator[](const K &key) {
+        if (size_ == 0) error("invalid use of BPT[] with key not exists");
+        Node tmp;
+        findLeafNode(key, tmp);
+        int i = tmp.lowerBound(key);
+        if (tmp.k[i] != key || i == tmp.size) error("invalid use of BPT[] with key not exists");
+        T output;
+        data.read(tmp.ptr[i], output);
+        return output;
+    }
+
+    template<class K, class T>
+    bool BPT<K, T>::count(const K &key) {
+        if (size_ == 0) return false;
+        Node tmp;
+        findLeafNode(key, tmp);
+        return tmp.find(key);
+    }
+
+    template<class K, class T>
+    void BPT<K, T>::assign(const K &key, const T &value) {
         if (root_pos == 0) { //empty Tree
             Node root;
             root.fa = 0;
