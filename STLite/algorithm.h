@@ -53,7 +53,7 @@ public:
         return false;
     }
 
-    T *query(int hash) {
+    const T *query(int hash) {
         int tmp = hash % N;
         for (int i = begin[tmp]; i; i = next[i]) if (id[i] == hash) return val + i;
         return nullptr;
