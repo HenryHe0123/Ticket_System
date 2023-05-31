@@ -44,9 +44,9 @@ namespace my {
 
         void find(const K &key, sjtu::vector<T> &output); //return in ascending order,empty if not found
 
-        size_t size() { return size_; }
+        size_t size() const { return size_; }
 
-        bool empty() { return size_ == 0; }
+        bool empty() const { return size_ == 0; }
 
     private:
         constexpr static int halfBlockSizeForMulti = 1950 / (sizeof(long) + sizeof(K) + sizeof(T));

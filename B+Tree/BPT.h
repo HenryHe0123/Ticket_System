@@ -58,9 +58,9 @@ namespace my {
 
         bool count(const K &key);
 
-        size_t size() { return size_; }
+        size_t size() const { return size_; }
 
-        bool empty() { return size_ == 0; }
+        bool empty() const { return size_ == 0; }
 
         void executeAll(void (*func)(const K &key, const T &value));
 
@@ -228,13 +228,13 @@ namespace my {
         //now tmp is the first leaf
         for (int i = 0; i < tmp.size; ++i) {
             data.read(tmp.ptr[i], v);
-            func(tmp.k[i],v);
+            func(tmp.k[i], v);
         }
         while (tmp.ptr[Degree]) {
             readNode(tmp.ptr[Degree], tmp);
             for (int i = 0; i < tmp.size; ++i) {
                 data.read(tmp.ptr[i], v);
-                func(tmp.k[i],v);
+                func(tmp.k[i], v);
             }
         }
     }

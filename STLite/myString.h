@@ -5,7 +5,7 @@
 
 namespace my {
 
-    template<size_t len = 64>
+    template<size_t len = 30>
     class string {
     private:
         char str[len + 1] = {0};
@@ -47,7 +47,7 @@ namespace my {
 
         inline bool operator>(const string<len> &s) const { return strcmp(str, s.str) > 0; }
 
-        inline bool operator==(const string<len> &s) const { return !strcmp(str, s.str); }
+        inline bool operator==(const string<len> &s) const { return strcmp(str, s.str) == 0; }
 
         inline bool operator!=(const string<len> &s) const { return strcmp(str, s.str); }
 
@@ -64,7 +64,21 @@ namespace my {
         explicit operator std::string() const { return std::string{str}; }
 
         //prevent ambiguous compare
-        inline bool operator==(const char *s) const { return !strcmp(str, s); }
+        inline bool operator==(const std::string &s) const { return strcmp(str, s.c_str()) == 0; }
+
+        inline bool operator!=(const std::string &s) const { return strcmp(str, s.c_str()); }
+
+        inline bool operator>(const std::string &s) const { return strcmp(str, s.c_str()) > 0; }
+
+        inline bool operator<(const std::string &s) const { return strcmp(str, s.c_str()) < 0; }
+
+        inline bool operator>=(const std::string &s) const { return strcmp(str, s.c_str()) >= 0; }
+
+        inline bool operator<=(const std::string &s) const { return strcmp(str, s.c_str()) <= 0; }
+
+        //--------------------------------
+
+        inline bool operator==(const char *s) const { return strcmp(str, s) == 0; }
 
         inline bool operator!=(const char *s) const { return strcmp(str, s); }
 
@@ -81,6 +95,8 @@ namespace my {
         void clear() { memset(str, 0, sizeof(str)); }
 
         inline int size() { return strlen(str); }
+
+        inline char *c_str() { return str; }
 
     };
 
