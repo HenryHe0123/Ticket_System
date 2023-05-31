@@ -62,6 +62,13 @@ namespace my {
 
         bool empty() const { return size_ == 0; }
 
+        void clear() {
+            root_pos = 0;
+            endAddress = firstNodeAddress;
+            size_ = 0;
+            data.clear();
+        }
+
         void executeAll(void (*func)(const K &key, const T &value));
 
         /*
@@ -221,6 +228,7 @@ namespace my {
 
     template<class K, class T>
     void BPT<K, T>::executeAll(void (*func)(const K &, const T &)) {
+        if(size_ == 0) return;
         Node tmp = root();
         int v;
         while (!tmp.isLeaf)

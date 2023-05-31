@@ -5,6 +5,7 @@ set(CMAKE_CXX_STANDARD 17)
 
 include_directories(B+Tree)
 include_directories(STLite)
+include_directories(src)
 
 add_executable(Ticket_System
         main.cpp
@@ -18,4 +19,5 @@ add_executable(Ticket_System
         STLite/vector.hpp
         STLite/myString.h
         B+Tree/data.h
-        src/simpleScanner.h)
+        src/simpleScanner.h
+        src/userSystem.h)
