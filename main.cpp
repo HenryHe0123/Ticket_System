@@ -108,9 +108,9 @@ void processLine(const std::string &line) {
         }
         userSystem.query_profile(c, u);
     } else if (token == "modify_profile") { //F
-        std::string c, u;
-        const char *p = nullptr, *n = nullptr, *m = nullptr;
-        int tmp;
+        std::string c, u, pp, nn, mm;
+        const char *p = nullptr, *n = nullptr, *m = nullptr; //*p must not point to temporary value
+        int gg;
         int *g = nullptr;
         while (scanner.hasMoreTokens()) {
             switch (scanner.getKey()) {
@@ -121,17 +121,20 @@ void processLine(const std::string &line) {
                     u = scanner.nextToken();
                     break;
                 case 'p':
-                    p = scanner.nextToken().c_str();
+                    pp = scanner.nextToken();
+                    p = pp.c_str();
                     break;
                 case 'n':
-                    n = scanner.nextToken().c_str();
+                    nn = scanner.nextToken();
+                    n = nn.c_str();
                     break;
                 case 'm':
-                    m = scanner.nextToken().c_str();
+                    mm = scanner.nextToken();
+                    m = mm.c_str();
                     break;
                 case 'g':
-                    tmp = stoi(scanner.nextToken());
-                    g = &tmp;
+                    gg = stoi(scanner.nextToken());
+                    g = &gg;
                     break;
                 default:
                     sjtu::error("modify_profile failed");

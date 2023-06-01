@@ -72,7 +72,7 @@ public:
             std::cout << "-1\n";
             return;
         } //c not login yet or u not exist
-        if (user_login[cur] < user.privilege) {
+        if (cur != username && user_login[cur] <= user.privilege) {
             std::cout << "-1\n";
             return;
         }
@@ -88,7 +88,7 @@ public:
             return;
         } //c not login yet or u not exist
         int curp = user_login[cur];
-        if (curp < user.privilege) {
+        if (curp <= user.privilege && cur != username) { //only allow c = u when cur.g = user.g
             std::cout << "-1\n";
             return;
         }
