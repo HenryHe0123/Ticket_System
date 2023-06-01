@@ -74,7 +74,34 @@ public:
         std::cout << user << '\n';
     }
 
-    //User *get_profile_for_modify(const std::string &c, const std::string &u);
+    void modify_profile(const std::string &c, const std::string &u,
+                        const char *p, const char *n, const char *m, const int *g) {
+        ustring cur(c), username(u);
+        User user;
+        if (!user_login.count(cur) || !user_map.find(username, user)) {
+            std::cout << "-1\n";
+            return;
+        } //c not login yet or u not exist
+        int curp = user_login[cur];
+        if (curp < user.privilege) {
+            std::cout << "-1\n";
+            return;
+        }
+        if (g) {
+            if (curp <= *g) {
+                std::cout << "-1\n";
+                return;
+            } else {
+                user.privilege = *g;
+                if(user_login.count(username)) user_login[username] = *g; //update the privilege
+            }
+        }
+        if (p) user.password = p;
+        if (n) user.name = n;
+        if (m) user.mail = m;
+        user_map.assign(username, user);
+        std::cout << user << '\n';
+    }
 
     void clean() {
         user_login.clear();
