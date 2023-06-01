@@ -7,7 +7,7 @@ include_directories(B+Tree)
 include_directories(STLite)
 include_directories(src)
 
-add_executable(Ticket_System
+add_executable(code
         main.cpp
         B+Tree/BPT.h
         B+Tree/multi_BPT.h
