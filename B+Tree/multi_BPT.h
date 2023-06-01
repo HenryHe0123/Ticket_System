@@ -48,6 +48,13 @@ namespace my {
 
         bool empty() const { return size_ == 0; }
 
+        void clear() {
+            root_pos = 0;
+            endAddress = firstNodeAddress;
+            size_ = 0;
+            root = Node();
+        }
+
     private:
         constexpr static int halfBlockSizeForMulti = 1950 / (sizeof(long) + sizeof(K) + sizeof(T));
 

@@ -1,5 +1,6 @@
 #include "src/userSystem.h"
 #include "src/simpleScanner.h"
+#include "src/trainSystem.h"
 
 using std::cout;
 
@@ -29,6 +30,8 @@ int main() {
     }
     return 0;
 }
+
+//---------------------------------------------------------------------------
 
 void processLine(const std::string &line) {
     SimpleScanner scanner(line);

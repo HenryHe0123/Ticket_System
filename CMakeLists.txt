@@ -20,4 +20,5 @@ add_executable(code
         STLite/myString.h
         B+Tree/data.h
         src/simpleScanner.h
-        src/userSystem.h)
+        src/userSystem.h
+        src/trainSystem.h)
