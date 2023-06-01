@@ -14,12 +14,14 @@ struct User {
 
     User() = default;
 
-    User(const std::string &user_name) : username(user_name) {}
+    explicit User(const std::string &user_name) : username(user_name) {}
+
+    explicit User(const my::string<20> &user_name) : username(user_name) {}
+
+    explicit User(const char *user_name) : username(user_name) {}
 
     User(const std::string &u, const std::string &p, const std::string &n, const std::string &m, int g = 10) :
             username(u), password(p), name(n), mail(m), privilege(g) {}
-
-    User(const User &u) = default;
 
     bool operator==(const User &u) const { return username == u.username; }
 
