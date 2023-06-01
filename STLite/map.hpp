@@ -597,6 +597,13 @@ namespace sjtu {
             size_--;
         }
 
+        bool erase(const Key &key) {
+            iterator iter = find(key);
+            if (iter == end()) return false;
+            erase(iter);
+            return true;
+        }
+
         /**
          * Returns the number of elements with key
          *   that compares equivalent to the specified argument,

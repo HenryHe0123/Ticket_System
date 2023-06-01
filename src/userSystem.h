@@ -6,7 +6,7 @@
 #include "../STLite/myString.h"
 
 struct User {
-    const my::string<20> username;
+    my::string<20> username;
     my::string<30> password;
     my::string<15> name;
     my::string<30> mail;
@@ -45,8 +45,8 @@ public:
         return 0;
     }
 
-    int add_first_user(const std::string &u, const std::string &p, const std::string &n, const std::string &m) {
-        User user(u, p, n, m);
+    int add_first_user(const User &user) {
+        if (user.privilege != 10) sjtu::error("add first user failed for privilege");
         user_map.assign(user.username, user);
         return 0;
     }
@@ -58,6 +58,11 @@ public:
         if (user_login.count(username) || user.password != p) return -1;
         user_login[username] = user.privilege;
         return 0;
+    }
+
+    int logout(const std::string &u) {
+        ustring username(u);
+        return user_login.erase(username) ? 0 : -1;
     }
 
     void query_profile(const std::string &c, const std::string &u) {
@@ -93,7 +98,7 @@ public:
                 return;
             } else {
                 user.privilege = *g;
-                if(user_login.count(username)) user_login[username] = *g; //update the privilege
+                if (user_login.count(username)) user_login[username] = *g; //update the privilege
             }
         }
         if (p) user.password = p;

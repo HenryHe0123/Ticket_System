@@ -29,7 +29,7 @@ class SimpleScanner {
 public:
     SimpleScanner() = default;
 
-    SimpleScanner(std::string input);
+    explicit SimpleScanner(std::string input);
 
     [[nodiscard]] bool hasMoreTokens() const;
 
@@ -37,13 +37,11 @@ public:
 
     void reset(const std::string &input);
 
+    char getKey(); //check "-x" token and return x
+
     static bool isInt(const std::string &token);
 
     static bool isFloat(const std::string &token);
-
-    static bool availableID(const std::string &token);
-
-    static bool checkQuotesMark(const char* str); //return true if " appeared
 
     sjtu::vector<std::string> tokens;
 
@@ -57,10 +55,10 @@ private:
 //implement
 //----------------------------------------------------------------------------
 
-SimpleScanner::SimpleScanner(std::string input):src_str(std::move(input)) {
+SimpleScanner::SimpleScanner(std::string input) : src_str(std::move(input)) {
     //slice src_str and stored it in tokens
     std::string tmp;
-    for(char ch : src_str) {
+    for (char ch: src_str) {
         if (ch == ' ') {
             if (!tmp.empty()) {
                 tokens.push_back(tmp);
@@ -70,7 +68,7 @@ SimpleScanner::SimpleScanner(std::string input):src_str(std::move(input)) {
             tmp += ch;
         }
     }
-    if(!tmp.empty()) tokens.push_back(tmp);
+    if (!tmp.empty()) tokens.push_back(tmp);
 }
 
 bool SimpleScanner::hasMoreTokens() const {
@@ -87,7 +85,7 @@ void SimpleScanner::reset(const std::string &input) {
     src_str = input;
     tokens.clear();
     std::string tmp;
-    for(char ch : src_str) {
+    for (char ch: src_str) {
         if (ch == ' ') {
             if (!tmp.empty()) {
                 tokens.push_back(tmp);
@@ -97,7 +95,7 @@ void SimpleScanner::reset(const std::string &input) {
             tmp += ch;
         }
     }
-    if(!tmp.empty()) tokens.push_back(tmp);
+    if (!tmp.empty()) tokens.push_back(tmp);
 }
 
 bool SimpleScanner::isInt(const std::string &token) {
@@ -119,22 +117,11 @@ bool SimpleScanner::isFloat(const std::string &token) {
     return true;
 }
 
-bool SimpleScanner::availableID(const std::string &token) {
-    if (token.size() > 30) return false;
-    for (char ch: token) {
-        if ((ch >= '0' && ch <= '9') || (ch >= 'A' && ch <= 'Z') ||
-            (ch >= 'a' && ch <= 'z') || ch == '_')
-            continue;
-        else return false;
-    }
-    return true;
-}
-
-bool SimpleScanner::checkQuotesMark(const char *str) {
-    for (int i = 0; str[i]; ++i) {
-        if (str[i] == 34) return true;
-    }
-    return false;
+char SimpleScanner::getKey() {
+    if (!hasMoreTokens()) sjtu::error("invalid use of getKey");
+    auto &token = tokens[index++];
+    if (token[0] != '-') sjtu::error("invalid use of getKey");
+    return token[1];
 }
 
 
