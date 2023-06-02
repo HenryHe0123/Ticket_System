@@ -3,6 +3,7 @@
 
 #include <cstring>
 #include "exceptions.hpp"
+#include "vector.hpp"
 
 template<size_t N, class T>
 struct HashMap {
@@ -65,6 +66,22 @@ void swap(T &x, T &y) {
     T tmp = x;
     x = y;
     y = tmp;
+}
+
+template<class T, class Cmp>
+void sort(sjtu::vector<T> &a, int l, int r, const Cmp &cmp) { //for vector
+    //if cmp(a,b) return a<=b, then sort from small to big
+    if (l >= r)return;
+    int i = l, j = r;
+    T flag = a[l];
+    while (i < j) {
+        while (i < j && cmp(flag, a[j])) --j;
+        while (i < j && cmp(a[i], flag)) ++i;
+        swap(a[i], a[j]);
+    } //i=j
+    swap(a[i], a[l]);
+    sort(a, l, i - 1, cmp);
+    sort(a, i + 1, r, cmp);
 }
 
 template<class T>

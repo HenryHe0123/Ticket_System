@@ -221,13 +221,33 @@ void processLine(const std::string &line) {
                     d = scanner.nextToken();
                     break;
                 default:
-                    sjtu::error("query_profile failed");
+                    sjtu::error("query_train failed");
             }
         }
         Date date(d);
-        trainSystem.query_train(i,d);
+        trainSystem.query_train(i, d);
     } else if (token == "query_ticket") { //SF
-
+        std::string s, t, d, p;
+        while (scanner.hasMoreTokens()) {
+            switch (scanner.getKey()) {
+                case 's':
+                    s = scanner.nextToken();
+                    break;
+                case 't':
+                    t = scanner.nextToken();
+                    break;
+                case 'd':
+                    d = scanner.nextToken();
+                    break;
+                case 'p':
+                    p = scanner.nextToken();
+                    break;
+                default:
+                    sjtu::error("query_ticket failed");
+            }
+        }
+        Date date(d);
+        trainSystem.query_ticket(s, t, date, p == "time");
     } else if (token == "query_transfer") { //N
 
     } else if (token == "buy_ticket") { //SF

@@ -168,6 +168,8 @@ struct Time {
 
     inline bool operator!=(const Time &t) const { return h != t.h || m != t.m; }
 
+    inline int operator-(const Time &t) const { return (h - t.h) * 60 + m - t.m; }
+
     inline Time operator+=(int x) { //h maybe more than 24
         m += x;
         h += m / 60;
@@ -217,6 +219,8 @@ struct Date_Time {
     }
 
     inline Date_Time operator-=(int x) { return this->operator+=(-x); }
+
+    inline int operator-(const Date_Time &dt) const { return (date - dt.date) * 24 * 60 + (time - dt.time); }
 };
 
 
