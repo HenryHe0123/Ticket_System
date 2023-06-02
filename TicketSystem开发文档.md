@@ -8,3 +8,13 @@
 4. 火车交互系统：购买车票、查询订单、退订
 
 #### 主题逻辑说明
+
+##### User System
+
+略
+
+##### Train System
+
+train_map, released_trains (BPT) 分别存储未发布/已发布火车信息
+
+seats_map (BPT) 存储已发布火车的剩余座位信息

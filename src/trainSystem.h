@@ -6,9 +6,9 @@
 #include "myStruct.h"
 #include <cstring>
 
+constexpr int N = 100;
+
 class Train {
-private:
-    static constexpr int N = 100;
 public:
     my::string<20> trainID;
     int stationNum = 2; //2 ~ N
@@ -68,7 +68,7 @@ public:
         released_trains.assign(id, train);
         Seat seat(train);
         Seat_Index index{id, train.beginDate};
-        seats_map.assign(index,seat); //add seat to seat_map only after released
+        seats_map.assign(index, seat); //add seat to seats_map only after released
         return 0;
     }
 
@@ -97,8 +97,6 @@ public:
     }
 
 private:
-    static constexpr int N = 100;
-
     my::BPT<ustring, Train> train_map; //when train released, remove it to released_train
     my::BPT<ustring, Train> released_trains;
 

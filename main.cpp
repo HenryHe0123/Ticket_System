@@ -5,6 +5,7 @@
 using std::cout;
 
 UserSystem userSystem;
+TrainSystem trainSystem;
 bool quit = false;
 
 void processLine(const std::string &line);
@@ -143,9 +144,63 @@ void processLine(const std::string &line) {
                     sjtu::error("modify_profile failed");
             }
         }
-        userSystem.modify_profile(c,u,p,n,m,g);
+        userSystem.modify_profile(c, u, p, n, m, g);
     } else if (token == "add_train") { //N
-
+        std::string ii, ss, pp, tt, oo, dd, xx;
+        char y;
+        int n, m;
+        while (scanner.hasMoreTokens()) {
+            switch (scanner.getKey()) {
+                case 'i':
+                    ii = scanner.nextToken();
+                    break;
+                case 'n':
+                    n = stoi(scanner.nextToken());
+                    break;
+                case 'm':
+                    m = stoi(scanner.nextToken());
+                    break;
+                case 's':
+                    ss = scanner.nextToken();
+                    break;
+                case 'p':
+                    pp = scanner.nextToken();
+                    break;
+                case 'x':
+                    xx = scanner.nextToken();
+                    break;
+                case 't':
+                    tt = scanner.nextToken();
+                    break;
+                case 'o':
+                    oo = scanner.nextToken();
+                    break;
+                case 'd':
+                    dd = scanner.nextToken();
+                    break;
+                case 'y':
+                    y = scanner.nextToken()[0];
+                    break;
+                default:
+                    sjtu::error("modify_profile failed");
+            }
+        }
+        my::string<20> i(ii);
+        Time x(xx);
+        Slicer slicer(dd);
+        Date d1(slicer[0]), d2(slicer[1]);
+        int p[N]{0}, t[N]{0}, o[N]{0};
+        slicer.reset(pp);
+        for (int j = 0; j < slicer.size(); ++j) p[j] = stoi(slicer[j]);
+        slicer.reset(tt);
+        for (int j = 0; j < slicer.size(); ++j) t[j] = stoi(slicer[j]);
+        slicer.reset(oo);
+        for (int j = 0; j < slicer.size(); ++j) o[j] = stoi(slicer[j]);
+        my::string<30> s[N];
+        slicer.reset(ss);
+        for (int j = 0; j < slicer.size(); ++j) s[j] = slicer[j];
+        Train train(i, n, m, s, p, x, t, o, d1, d2, y);
+        cout << trainSystem.add_train(train) << '\n';
     } else if (token == "delete_train") { //N
 
     } else if (token == "release_train") { //N

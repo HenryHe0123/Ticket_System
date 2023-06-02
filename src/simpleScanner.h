@@ -39,9 +39,7 @@ public:
 
     char getKey(); //check "-x" token and return x
 
-    static bool isInt(const std::string &token);
-
-    static bool isFloat(const std::string &token);
+    [[maybe_unused]] static bool isInt(const std::string &token);
 
     sjtu::vector<std::string> tokens;
 
@@ -51,9 +49,7 @@ private:
     int index = 0; //next token's position
 };
 
-//----------------------------------------------------------------------------
 //implement
-//----------------------------------------------------------------------------
 
 SimpleScanner::SimpleScanner(std::string input) : src_str(std::move(input)) {
     //slice src_str and stored it in tokens
@@ -98,22 +94,10 @@ void SimpleScanner::reset(const std::string &input) {
     if (!tmp.empty()) tokens.push_back(tmp);
 }
 
-bool SimpleScanner::isInt(const std::string &token) {
+[[maybe_unused]] bool SimpleScanner::isInt(const std::string &token) {
     if (token.size() > 10) return false;
     for (char ch: token)
         if (ch > '9' || ch < '0') return false;
-    return true;
-}
-
-bool SimpleScanner::isFloat(const std::string &token) {
-    if (token.size() > 13) return false;
-    bool point = false;
-    for (int i = 0; i < token.size(); ++i) {
-        if (token[i] == '.') {
-            if (!point && i && i != token.size() - 1) point = true;
-            else return false;
-        } else if (token[i] < '0' || token[i] > '9') return false;
-    }
     return true;
 }
 
@@ -124,5 +108,65 @@ char SimpleScanner::getKey() {
     return token[1];
 }
 
+/*
+ * Class: Slicer
+ * -------------------
+ * This class divides a string into individual tokens by sign char '|'.
+ *
+ */
+
+class Slicer {
+public:
+    Slicer() = default;
+
+    explicit Slicer(std::string input);
+
+    void reset(const std::string &input);
+
+    [[nodiscard]] inline size_t size() const { return tokens.size(); }
+
+    inline std::string operator[](int i) const { return tokens[i]; }
+
+private:
+    static constexpr char sign = '|';
+
+    std::string src;
+
+    sjtu::vector<std::string> tokens;
+};
+
+//implement
+
+Slicer::Slicer(std::string input) : src(std::move(input)) {
+    std::string tmp;
+    for (char ch: src) {
+        if (ch == sign) {
+            if (!tmp.empty()) {
+                tokens.push_back(tmp);
+                tmp.clear();
+            }
+        } else {
+            tmp += ch;
+        }
+    }
+    if (!tmp.empty()) tokens.push_back(tmp);
+}
+
+void Slicer::reset(const std::string &input) {
+    src = input;
+    tokens.clear();
+    std::string tmp;
+    for (char ch: src) {
+        if (ch == ' ') {
+            if (!tmp.empty()) {
+                tokens.push_back(tmp);
+                tmp.clear();
+            }
+        } else {
+            tmp += ch;
+        }
+    }
+    if (!tmp.empty()) tokens.push_back(tmp);
+}
 
 #endif //TICKET_SYSTEM_SIMPLESCANNER_H
