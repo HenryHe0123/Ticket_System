@@ -44,6 +44,7 @@ void processLine(const std::string &line) {
         quit = true;
     } else if (token == "clean") { //R
         userSystem.clean();
+        trainSystem.clean();
         cout << "0\n";
     } else if (token == "add_user") { //N
         std::string c;
@@ -202,11 +203,29 @@ void processLine(const std::string &line) {
         Train train(i, n, m, s, p, x, t, o, d1, d2, y);
         cout << trainSystem.add_train(train) << '\n';
     } else if (token == "delete_train") { //N
-
+        if (scanner.getKey() != 'i') sjtu::error("delete_train failed");
+        auto i = scanner.nextToken();
+        cout << trainSystem.delete_train(i) << '\n';
     } else if (token == "release_train") { //N
-
+        if (scanner.getKey() != 'i') sjtu::error("release_train failed");
+        auto i = scanner.nextToken();
+        cout << trainSystem.release_train(i) << '\n';
     } else if (token == "query_train") { //N
-
+        std::string i, d;
+        while (scanner.hasMoreTokens()) {
+            switch (scanner.getKey()) {
+                case 'i':
+                    i = scanner.nextToken();
+                    break;
+                case 'd':
+                    d = scanner.nextToken();
+                    break;
+                default:
+                    sjtu::error("query_profile failed");
+            }
+        }
+        Date date(d);
+        trainSystem.query_train(i,d);
     } else if (token == "query_ticket") { //SF
 
     } else if (token == "query_transfer") { //N

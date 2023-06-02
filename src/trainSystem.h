@@ -49,6 +49,12 @@ class TrainSystem {
 public:
     TrainSystem() : train_map("train_map"), released_trains("released_trains"), seats_map("seats_map") {}
 
+    void clean() {
+        train_map.clear();
+        released_trains.clear();
+        seats_map.clear();
+    }
+
     int add_train(const Train &train) {
         if (train_map.count(train.trainID) || released_trains.count(train.trainID)) return -1;
         train_map.assign(train.trainID, train);
