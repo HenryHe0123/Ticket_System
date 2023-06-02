@@ -157,7 +157,7 @@ void Slicer::reset(const std::string &input) {
     tokens.clear();
     std::string tmp;
     for (char ch: src) {
-        if (ch == ' ') {
+        if (ch == sign) {
             if (!tmp.empty()) {
                 tokens.push_back(tmp);
                 tmp.clear();
