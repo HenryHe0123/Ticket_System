@@ -47,7 +47,7 @@ public:
 class TrainSystem {
     using ustring = my::string<20>;
 public:
-    TrainSystem() : train_map("train_map"), released_trains("released_trains") {}
+    TrainSystem() : train_map("train_map"), released_trains("released_trains"), seats_map("seats_map") {}
 
     int add_train(const Train &train) {
         if (train_map.count(train.trainID) || released_trains.count(train.trainID)) return -1;
@@ -66,16 +66,101 @@ public:
         Train train = train_map[id];
         train_map.erase(id);
         released_trains.assign(id, train);
+        Seat seat(train);
+        Seat_Index index{id, train.beginDate};
+        seats_map.assign(index,seat); //add seat to seat_map only after released
         return 0;
     }
 
+    void query_train(const std::string &i, const Date &d) {
+        ustring id(i);
+        Train train;
+        if (released_trains.find(id, train)) { //released train find
+            if (train.beginDate != d) {
+                std::cout << "-1\n";
+                return;
+            }
+            Seat_Index index{id, d};
+            output_query_train(train, seats_map[index]);
+        } else {
+            if (!train_map.find(id, train)) { //no find
+                std::cout << "-1\n";
+                return;
+            }
+            if (train.beginDate != d) {
+                std::cout << "-1\n";
+                return;
+            }
+            Seat seat(train);
+            output_query_train(train, seat);
+        }
+    }
 
 private:
+    static constexpr int N = 100;
+
     my::BPT<ustring, Train> train_map; //when train released, remove it to released_train
     my::BPT<ustring, Train> released_trains;
 
+    struct Seat_Index {
+        ustring id;
+        Date date;
+
+        inline bool operator<(const Seat_Index &index) const { return id < index.id; }
+
+        inline bool operator>(const Seat_Index &index) const { return id > index.id; }
+
+        inline bool operator>=(const Seat_Index &index) const { return id >= index.id; }
+
+        inline bool operator<=(const Seat_Index &index) const { return id <= index.id; }
+
+        inline bool operator!=(const Seat_Index &index) const { return id != index.id || date != index.date; }
+
+        inline bool operator==(const Seat_Index &index) const { return id == index.id && date == index.date; }
+    };
+
+    struct Seat {
+        int remain[N]{0};
+
+        Seat() = default;
+
+        explicit Seat(const Train &train) {
+            for (int i = 0; i < train.stationNum; ++i) remain[i] = train.seat;
+        }
+
+        inline void modify(int l, int r, int add) {
+            for (int i = l; i <= r; ++i) remain[i] += add;
+        }
+
+        inline int min(int l, int r) {
+            int tmp = 1e5 + 1;
+            for (int i = l; i <= r; ++i) tmp = std::min(tmp, remain[i]);
+            return tmp;
+        }
+    };
+
+    my::BPT<Seat_Index, Seat> seats_map; //only for released trains
+
+    static inline void output_query_train(const Train &train, const Seat &seat);
 
 };
+
+void TrainSystem::output_query_train(const Train &train, const TrainSystem::Seat &seat) {
+    std::cout << train.trainID << ' ' << train.type << '\n';
+    Date_Time t = {train.beginDate, train.startTime};
+    std::cout << train.stations[0] << " xx-xx xx:xx -> " << t << ' ' << train.prices[0] << ' ' << seat.remain[0]
+              << '\n';
+    t += train.travelTimes[0];
+    for (int j = 1; j < train.stationNum - 1; ++j) {
+        std::cout << train.stations[j] << ' ' << t << " -> ";
+        t += train.stopoverTimes[j - 1];
+        std::cout << t << ' ' << train.prices[j] << ' ' << seat.remain[j] << '\n';
+        t += train.travelTimes[j];
+    }
+    //j = stationNum - 1
+    std::cout << train.stations[train.stationNum - 1] << ' ' << t << " -> xx-xx xx:xx "
+              << train.prices[train.stationNum - 1] << " x\n";
+}
 
 
 #endif //TICKET_SYSTEM_TRAIN_SYSTEM_H

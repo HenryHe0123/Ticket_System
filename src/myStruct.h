@@ -168,7 +168,7 @@ struct Time {
 
     inline bool operator!=(const Time &t) const { return h != t.h || m != t.m; }
 
-    inline void operator+=(int x) {
+    inline Time operator+=(int x) { //h maybe more than 24
         m += x;
         h += m / 60;
         m %= 60;
@@ -176,6 +176,7 @@ struct Time {
             m += 60;
             --h;
         }
+        return *this;
     }
 
     inline Time operator+(int x) {
@@ -184,16 +185,38 @@ struct Time {
         return tmp;
     }
 
-    inline void operator-=(int x) { *this += -x; }
+    inline Time operator-=(int x) { return this->operator+=(-x); }
 
     inline Time operator-(int x) { return *this + (-x); }
 
-    friend std::ostream& operator<<(std::ostream& os, const Time &t)
-    {
+    friend std::ostream &operator<<(std::ostream &os, const Time &t) {
         os << t.h / 10 << t.h % 10 << ':' << t.m / 10 << t.m % 10;
         return os;
     }
 
+};
+
+struct Date_Time {
+    Date date;
+    Time time;
+
+    friend std::ostream &operator<<(std::ostream &os, const Date_Time &dt) {
+        os << dt.date << ' ' << dt.time;
+        return os;
+    }
+
+    inline Date_Time operator+=(int x) {
+        time += x;
+        date += time.h / 24;
+        time.h %= 24;
+        if (time.h < 0) {
+            --date;
+            time.h += 24;
+        }
+        return *this;
+    }
+
+    inline Date_Time operator-=(int x) { return this->operator+=(-x); }
 };
 
 
