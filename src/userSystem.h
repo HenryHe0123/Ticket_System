@@ -115,6 +115,8 @@ public:
         user_map.clear();
     }
 
+    inline bool logged_in(const std::string &u) const { return user_login.count(ustring(u)); }
+
 private:
     my::BPT<ustring, User> user_map;
     sjtu::map<ustring, int> user_login; //store privilege in int

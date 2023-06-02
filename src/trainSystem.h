@@ -47,24 +47,33 @@ public:
 class TrainSystem {
     using ustring = my::string<20>;
 public:
-    TrainSystem() : train_map("train_map") {}
-
-    bool empty() const { return train_map.empty(); }
+    TrainSystem() : train_map("train_map"), released_trains("released_trains") {}
 
     int add_train(const Train &train) {
-        if (train_map.count(train.trainID)) return -1;
+        if (train_map.count(train.trainID) || released_trains.count(train.trainID)) return -1;
         train_map.assign(train.trainID, train);
         return 0;
     }
 
     int delete_train(const std::string &i) {
+        if (train_map.erase(ustring(i))) return 0;
+        return -1;
+    }
+
+    int release_train(const std::string &i) {
         ustring id(i);
-        //todo
+        if (!train_map.count(id) || released_trains.count(id)) return -1;
+        Train train = train_map[id];
+        train_map.erase(id);
+        released_trains.assign(id, train);
         return 0;
     }
 
+
 private:
-    my::BPT<ustring, Train> train_map;
+    my::BPT<ustring, Train> train_map; //when train released, remove it to released_train
+    my::BPT<ustring, Train> released_trains;
+
 
 };
 
