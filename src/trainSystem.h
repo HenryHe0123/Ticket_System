@@ -52,7 +52,8 @@ class TrainSystem {
     using sstring = my::string<30>;
 public:
     TrainSystem() : train_map("train_map"), released_trains("released_trains"),
-                    seats_map("seats_map"), stop_multimap("stop_multimap") {}
+                    seats_map("seats_map"), stop_multimap("stop_multimap"),
+                    order_index("order_index"), order_u("order_u") {}
 
     void clean() {
         train_map.clear();
@@ -79,7 +80,7 @@ public:
         train_map.erase(id);
         released_trains.assign(id, train);
         Seat seat(train);
-        Seat_Index index{id, train.beginDate};
+        Index index{id, train.beginDate};
         seats_map.assign(index, seat); //add seat to seats_map only after released
         //add Stop information
         Date_Time t = {train.beginDate, train.startTime};
@@ -106,7 +107,7 @@ public:
                 std::cout << "-1\n";
                 return;
             }
-            Seat_Index index{id, d};
+            Index index{id, d};
             output_query_train(train, seats_map[index]);
         } else {
             if (!train_map.find(id, train)) { //no find
@@ -144,7 +145,7 @@ public:
             //available train
             Train train = released_trains[tmp1.id];
             int price = train.getPrice(tmp1.index, tmp2.index - 1);
-            Seat seat = seats_map[Seat_Index{train.trainID, train.beginDate}];
+            Seat seat = seats_map[Index{train.trainID, train.beginDate}];
             int seatNum = seat.min(tmp1.index, tmp2.index - 1);
             Ticket ticket(tmp1.id, tmp1.leave, tmp2.arrive, price, seatNum);
             tickets.push_back(ticket);
@@ -157,25 +158,30 @@ public:
         }
     }
 
+    int buy_ticket() { //return -2 means adding to queue
+        //todo
+        return -1;
+    }
+
 private:
     my::BPT<ustring, Train> train_map; //when train released, remove it to released_train
     my::BPT<ustring, Train> released_trains;
 
-    struct Seat_Index {
+    struct Index {
         ustring id;
         Date date;
 
-        inline bool operator<(const Seat_Index &index) const { return id < index.id; }
+        inline bool operator<(const Index &index) const { return id < index.id; }
 
-        inline bool operator>(const Seat_Index &index) const { return id > index.id; }
+        inline bool operator>(const Index &index) const { return id > index.id; }
 
-        inline bool operator>=(const Seat_Index &index) const { return id >= index.id; }
+        inline bool operator>=(const Index &index) const { return id >= index.id; }
 
-        inline bool operator<=(const Seat_Index &index) const { return id <= index.id; }
+        inline bool operator<=(const Index &index) const { return id <= index.id; }
 
-        inline bool operator!=(const Seat_Index &index) const { return id != index.id || date != index.date; }
+        inline bool operator!=(const Index &index) const { return id != index.id || date != index.date; }
 
-        inline bool operator==(const Seat_Index &index) const { return id == index.id && date == index.date; }
+        inline bool operator==(const Index &index) const { return id == index.id && date == index.date; }
     };
 
     struct Seat {
@@ -198,7 +204,7 @@ private:
         }
     };
 
-    my::BPT<Seat_Index, Seat> seats_map; //only for train released
+    my::BPT<Index, Seat> seats_map; //only for train released
 
     struct Stop {
         ustring id;
@@ -241,6 +247,29 @@ private:
         Ticket(const ustring &id, const Date_Time &st, const Date_Time &ed, int p, int seat) :
                 id(id), price(p), seat(seat), start(st), end(ed) {}
     };
+
+    struct Order {
+        ustring username;
+        Index index;
+        int time = 0, status = 0, num = 0; //status: 1-success, 0-pending, -1-refunded
+        sstring from, to;
+        Date_Time start, end;
+
+        inline bool operator<(const Order &order) const { return time < order.time; }
+
+        inline bool operator>(const Order &order) const { return time > order.time; }
+
+        inline bool operator<=(const Order &order) const { return time <= order.time; }
+
+        inline bool operator>=(const Order &order) const { return time >= order.time; }
+
+        inline bool operator==(const Order &order) const { return time == order.time; }
+
+        inline bool operator!=(const Order &order) const { return time != order.time; }
+    };
+
+    my::multiBPT<Index, Order> order_index;
+    my::multiBPT<ustring, Order> order_u;
 
     static inline bool cmp_cost(const Ticket &a, const Ticket &b) {
         if (a.price == b.price) return a.id <= b.id;

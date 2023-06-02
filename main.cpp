@@ -36,8 +36,9 @@ int main() {
 
 void processLine(const std::string &line) {
     SimpleScanner scanner(line);
-    std::string token = scanner.nextToken(); //timestamp
+    std::string token = scanner.nextToken(); //[time]
     cout << token << ' ';
+    int timestamp = stoi(token.substr(1,token.size()-2));
     token = scanner.nextToken(); //cmd
     if (token == "exit") { //R
         cout << "bye\n";
@@ -249,7 +250,7 @@ void processLine(const std::string &line) {
         Date date(d);
         trainSystem.query_ticket(s, t, date, p == "time");
     } else if (token == "query_transfer") { //N
-
+        cout << "skip\n";
     } else if (token == "buy_ticket") { //SF
 
     } else if (token == "query_order") { //F
