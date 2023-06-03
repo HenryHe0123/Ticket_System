@@ -218,7 +218,15 @@ struct Date_Time {
         return *this;
     }
 
+    inline Date_Time operator+(int x) {
+        Date_Time tmp = *this;
+        tmp += x;
+        return tmp;
+    }
+
     inline Date_Time operator-=(int x) { return this->operator+=(-x); }
+
+    inline Date_Time operator-(int x) { return this->operator+(-x); }
 
     inline int operator-(const Date_Time &dt) const { return (date - dt.date) * 24 * 60 + (time - dt.time); }
 };

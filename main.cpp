@@ -38,7 +38,7 @@ void processLine(const std::string &line) {
     SimpleScanner scanner(line);
     std::string token = scanner.nextToken(); //[time]
     cout << token << ' ';
-    int timestamp = stoi(token.substr(1,token.size()-2));
+    int timestamp = stoi(token.substr(1, token.size() - 2));
     token = scanner.nextToken(); //cmd
     if (token == "exit") { //R
         cout << "bye\n";
@@ -252,7 +252,40 @@ void processLine(const std::string &line) {
     } else if (token == "query_transfer") { //N
         cout << "skip\n";
     } else if (token == "buy_ticket") { //SF
-
+        std::string u, i, d, f, t;
+        bool q = false; //pending, initially false
+        int n;
+        while (scanner.hasMoreTokens()) {
+            switch (scanner.getKey()) {
+                case 'u':
+                    u = scanner.nextToken();
+                    break;
+                case 'i':
+                    i = scanner.nextToken();
+                    break;
+                case 'd':
+                    d = scanner.nextToken();
+                    break;
+                case 'n':
+                    n = stoi(scanner.nextToken());
+                    break;
+                case 'f':
+                    f = scanner.nextToken();
+                    break;
+                case 't':
+                    t = scanner.nextToken();
+                    break;
+                case 'q':
+                    q = (scanner.nextToken() == "true");
+                    break;
+                default:
+                    sjtu::error("buy_ticket failed");
+            }
+        }
+        Date date(d);
+        if (userSystem.logged_in(u))
+            trainSystem.buy_ticket(timestamp, u, i, date, n, f, t, q);
+        else std::cout << "-1\n";
     } else if (token == "query_order") { //F
 
     } else if (token == "refund_ticket") { //N

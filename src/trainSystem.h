@@ -6,6 +6,7 @@
 #include "../STLite/algorithm.h"
 #include "myStruct.h"
 #include <cstring>
+#include <utility>
 
 constexpr int N = 100;
 
@@ -53,7 +54,7 @@ class TrainSystem {
 public:
     TrainSystem() : train_map("train_map"), released_trains("released_trains"),
                     seats_map("seats_map"), stop_multimap("stop_multimap"),
-                    order_index("order_index"), order_u("order_u") {}
+                    pending_order("pending_order"), order_u("order_u") {}
 
     void clean() {
         train_map.clear();
@@ -158,9 +159,39 @@ public:
         }
     }
 
-    int buy_ticket() { //return -2 means adding to queue
-        //todo
-        return -1;
+    void buy_ticket(int timestamp, const std::string &u, const std::string &i, const Date &d, int n,
+                    const std::string &f, const std::string &t, bool pend) {
+        ustring username(u), id(i);
+        sstring from(f), to(t);
+        int tot = 0;
+        Train train;
+        if (!released_trains.find(id, train)) { //train no find
+            std::cout << "-1\n";
+            return;
+        }
+        int l = -1, r = -1;
+        Date_Time start, end;
+        if (!search_train_info(train, from, to, l, r, start, end)) {
+            std::cout << "-1\n";
+            return;
+        }
+        Index index = {id, train.beginDate};
+        Seat seat = seats_map[index];
+        int remainNum = seat.min(l, r - 1);
+        int price = train.getPrice(l, r - 1);
+        Order order(timestamp, price, n, username, index, from, to, start, end);
+        if (remainNum >= n) {
+            seat.modify(l, r - 1, -n);
+            seats_map.assign(index, seat);
+            order.status = 1;
+            order_u.insert(username, order);
+            std::cout << (long long) price * n << '\n';
+        } else if (pend) {
+            order.status = 0;
+            pending_order.insert(index, order);
+            order_u.insert(username, order);
+            std::cout << "queue\n";
+        } else std::cout << "-1\n";
     }
 
 private:
@@ -251,9 +282,18 @@ private:
     struct Order {
         ustring username;
         Index index;
-        int time = 0, status = 0, num = 0; //status: 1-success, 0-pending, -1-refunded
+        int time = 0, status = 1, price = 0, num = 0; //status: 1-success, 0-pending, -1-refunded
         sstring from, to;
         Date_Time start, end;
+
+        Order() = default;
+
+        explicit Order(int time) : time(time) {}
+
+        Order(int time, int p, int n, const ustring &u, Index index, const sstring &f, const sstring &t,
+              const Date_Time &st, const Date_Time &ed) : time(time), num(n), price(p),
+                                                          username(u), index(std::move(index)), from(f), to(t),
+                                                          start(st), end(ed) {}
 
         inline bool operator<(const Order &order) const { return time < order.time; }
 
@@ -268,7 +308,7 @@ private:
         inline bool operator!=(const Order &order) const { return time != order.time; }
     };
 
-    my::multiBPT<Index, Order> order_index;
+    my::multiBPT<Index, Order> pending_order;
     my::multiBPT<ustring, Order> order_u;
 
     static inline bool cmp_cost(const Ticket &a, const Ticket &b) {
@@ -283,6 +323,9 @@ private:
     }
 
     static inline void output_query_train(const Train &train, const Seat &seat);
+
+    static inline bool search_train_info(const Train &train, const sstring &f, const sstring &t, int &l, int &r,
+                                         Date_Time &st, Date_Time &ed);
 
 };
 
@@ -301,6 +344,29 @@ void TrainSystem::output_query_train(const Train &train, const TrainSystem::Seat
     //j = stationNum - 1
     std::cout << train.stations[train.stationNum - 1] << ' ' << t << " -> xx-xx xx:xx "
               << train.prices[train.stationNum - 1] << " x\n";
+}
+
+bool TrainSystem::search_train_info(const Train &train, const TrainSystem::sstring &f, const TrainSystem::sstring &t,
+                                    int &l, int &r, Date_Time &st, Date_Time &ed) {
+    Date_Time now = {train.beginDate, train.startTime};
+    bool findl = false;
+    for (int i = 0; i < train.stationNum; ++i) {
+        if (train.stations[i] == f) {
+            if (findl) sjtu::error("search train information chaos");
+            l = i;
+            st = now;
+            findl = true;
+        }
+        if (i && i < train.stationNum - 1) now += train.stopoverTimes[i - 1];
+        if (train.stations[i] == t) {
+            if (!findl) return false;
+            r = i;
+            ed = now;
+            return true;
+        }
+        if (i < train.stationNum - 1) now += train.travelTimes[i];
+    }
+    return false;
 }
 
 
