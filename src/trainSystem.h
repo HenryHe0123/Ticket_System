@@ -194,6 +194,14 @@ public:
         } else std::cout << "-1\n";
     }
 
+    void query_order(const std::string &u) {
+        ustring user(u);
+        vector<Order> orders;
+        order_u.find(user, orders); //orders ascending
+        std::cout << orders.size() << '\n';
+        for (int i = orders.size() - 1; i >= 0; --i) std::cout << orders[i] << '\n';
+    }
+
 private:
     my::BPT<ustring, Train> train_map; //when train released, remove it to released_train
     my::BPT<ustring, Train> released_trains;
@@ -306,6 +314,15 @@ private:
         inline bool operator==(const Order &order) const { return time == order.time; }
 
         inline bool operator!=(const Order &order) const { return time != order.time; }
+
+        friend std::ostream &operator<<(std::ostream &os, const Order &order) {
+            if (order.status == 1) os << "[success] ";
+            else if (order.status == 0) os << "[pending] ";
+            else os << "[refunded] ";
+            os << order.index.id << ' ' << order.from << ' ' << order.start << " -> " << order.to
+               << ' ' << order.end << ' ' << order.price << ' ' << order.num;
+            return os;
+        }
     };
 
     my::multiBPT<Index, Order> pending_order;

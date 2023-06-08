@@ -287,7 +287,12 @@ void processLine(const std::string &line) {
             trainSystem.buy_ticket(timestamp, u, i, date, n, f, t, q);
         else std::cout << "-1\n";
     } else if (token == "query_order") { //F
-
+        std::string u;
+        if (scanner.getKey() != 'u') sjtu::error("query_order failed");
+        u = scanner.nextToken();
+        if (scanner.hasMoreTokens()) sjtu::error("query_order failed");
+        if (userSystem.logged_in(u)) trainSystem.query_order(u);
+        else std::cout << "-1\n";
     } else if (token == "refund_ticket") { //N
 
     } else sjtu::error("invalid command");
