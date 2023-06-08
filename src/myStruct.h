@@ -8,9 +8,10 @@
  */
 
 const int daysBeforeMonth[14] = {0, 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365};
+const int dayOfMonth[13] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
 struct Date {
-    int month = 6, day = 1; //only for 06-01 ~ 08-31
+    int month = 6, day = 1;
 
     Date() = default;
 
@@ -35,11 +36,8 @@ struct Date {
 
     inline Date &operator++() {
         ++day;
-        if (day > 31) { //7.32->8.1
-            day -= 31;
-            ++month;
-        } else if (day == 31 && month == 6) { //6.31->7.1
-            day -= 30;
+        if (day > dayOfMonth[month]) {
+            day -= dayOfMonth[month];
             ++month;
         }
         return *this;
@@ -47,37 +45,22 @@ struct Date {
 
     inline Date operator++(int) {
         Date pre = *this;
-        ++day;
-        if (day > 31) { //7.32->8.1
-            day -= 31;
-            ++month;
-        } else if (day == 31 && month == 6) { //6.31->7.1
-            day -= 30;
-            ++month;
-        }
+        ++*this;
         return pre;
     }
 
     inline Date &operator--() {
         --day;
-        if (day == 0) { //8.1->7.31, 7.1->6.30
+        if (day <= 0) {
             --month;
-            if (month == 7) day = 31;
-            else if (month == 6) day = 30;
-            else sjtu::error("Date out of bound");
+            day += dayOfMonth[month];
         }
         return *this;
     }
 
     inline Date operator--(int) {
         Date pre = *this;
-        --day;
-        if (day == 0) { //8.1->7.31, 7.1->6.30
-            --month;
-            if (month == 7) day = 31;
-            else if (month == 6) day = 30;
-            else sjtu::error("Date out of bound");
-        }
+        --*this;
         return pre;
     }
 
@@ -85,45 +68,18 @@ struct Date {
         return daysBeforeMonth[month] + day - daysBeforeMonth[d.month] - d.day;
     }
 
-    inline void operator+=(int i) {
-        if (i < 0) {
-            *this -= -i;
-            return;
-        }
-        if (i > 91) sjtu::error("Date out of bound");
+    inline Date &operator+=(int i) {
         day += i;
-        if (day < 31) return;
-        //day >= 31
-        if (month == 6) { //6.day -> 7.(day-30) -> ??
-            ++month;
-            day -= 30;
-            if (day > 31) {
-                ++month;
-                day -= 31;
-            }
-        } else if (month == 7 && day > 31) { //7.day -> 8.(day-31)
-            ++month;
-            day -= 31;
-        } else sjtu::error("Date out of bound");
+        while (day > dayOfMonth[month])
+            day -= dayOfMonth[month++];
+        return *this;
     }
 
-    inline void operator-=(int i) {
-        if (i < 0) {
-            *this += -i;
-            return;
-        }
-        if (i > 91) sjtu::error("Date out of bound");
-        if (day > i) {
-            day -= i;
-            return;
-        }
-        --month;
-        day += (month == 6) ? 30 : 31;
+    inline Date &operator-=(int i) {
         day -= i;
-        if (day < 1) { //8.xx -> 6.xx
-            --month;
-            day += 30;
-        }
+        while (day <= 0)
+            day += dayOfMonth[--month];
+        return *this;
     }
 
     inline Date operator+(int x) const {

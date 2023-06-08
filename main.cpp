@@ -11,8 +11,8 @@ bool quit = false;
 void processLine(const std::string &line);
 
 int main() {
-    //freopen("testcases/basic_2/1.in","r",stdin);
-    //freopen("test.out","w",stdout);
+    //freopen("testcases/basic_2/1.in", "r", stdin);
+    //freopen("test.out", "w", stdout);
 
     std::ios::sync_with_stdio(false);
     std::cin.tie(nullptr);
@@ -196,12 +196,16 @@ void processLine(const std::string &line) {
         for (int j = 0; j < slicer.size(); ++j) p[j] = stoi(slicer[j]);
         slicer.reset(tt);
         for (int j = 0; j < slicer.size(); ++j) t[j] = stoi(slicer[j]);
-        slicer.reset(oo);
-        for (int j = 0; j < slicer.size(); ++j) o[j] = stoi(slicer[j]);
+        int *op = nullptr;
+        if (oo != "_") {
+            slicer.reset(oo);
+            for (int j = 0; j < slicer.size(); ++j) o[j] = stoi(slicer[j]);
+            op = o;
+        }
         my::string<30> s[N];
         slicer.reset(ss);
         for (int j = 0; j < slicer.size(); ++j) s[j] = slicer[j];
-        Train train(i, n, m, s, p, x, t, o, d1, d2, y);
+        Train train(i, n, m, s, p, x, t, op, d1, d2, y);
         cout << trainSystem.add_train(train) << '\n';
     } else if (token == "delete_train") { //N
         if (scanner.getKey() != 'i') sjtu::error("delete_train failed");

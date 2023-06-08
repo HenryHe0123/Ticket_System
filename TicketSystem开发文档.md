@@ -16,11 +16,23 @@
 ##### Train System
 
 ```c++
+class Train {
+	my::string<20> trainID;
+    int stationNum = 2; //2 ~ N
+    my::string<30> stations[N];
+    int seat = 0;
+    int prices[N]{0}; //stationNum - 1
+    Time startTime; //for every day during Date begin to end!
+    int travelTimes[N]{0}, stopoverTimes[N]{0}; //stationNum - 1/2
+    Date beginDate, endDate; //saleDate
+    char type = 0;
+} //外部类
 my::BPT<ustring, Train> train_map; //未发布火车信息
 my::BPT<ustring, Train> released_trains;//已发布火车信息
 //不包含座位信息
-struct Index; //作为查询火车其他信息的索引(火车id，起始日期)
-struct Stop; //存储火车停靠站信息(id，站台index，到达和离开时间)
+struct Seat; //一个记录座位剩余的int数组remain 
+struct Index; //作为查询火车其他信息的索引(火车id，出发日期)
+struct Stop; //存储火车停靠站信息(id，站台index，到达和离开时间，列车出发时间)
 my::BPT<Index, Seat> seats_map; 
 my::multiBPT<sstring, Stop> stop_multimap;
 //只记录已发布火车座位信息

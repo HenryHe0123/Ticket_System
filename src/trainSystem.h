@@ -18,10 +18,10 @@ public:
     int stationNum = 2; //2 ~ N
     my::string<30> stations[N];
     int seat = 0;
-    int prices[N]{0};
-    Time startTime;
-    int travelTimes[N]{0}, stopoverTimes[N]{0};
-    Date beginDate, endDate;
+    int prices[N]{0}; //stationNum - 1
+    Time startTime; //for every day during Date begin to end!
+    int travelTimes[N]{0}, stopoverTimes[N]{0}; //stationNum - 1/2
+    Date beginDate, endDate; //saleDate
     char type = 0;
 
     Train() = default;
@@ -82,22 +82,28 @@ public:
         Train train = train_map[id];
         train_map.erase(id);
         released_trains.assign(id, train);
+        //add Seat and Stop information
         Seat seat(train);
-        Index index{id, train.beginDate};
-        seats_map.assign(index, seat); //add seat to seats_map only after released
-        //add Stop information
-        Date_Time t = {train.beginDate, train.startTime};
+        Index index;
+        index.id = id;
         Stop stop(i);
-        stop.arrive = stop.leave = t;
-        stop_multimap.insert(train.stations[0], stop);
-        t += train.travelTimes[0];
-        for (int j = 1; j < train.stationNum; ++j) {
-            stop.index = j;
-            stop.arrive = t;
-            if (j != train.stationNum - 1) t += train.stopoverTimes[j - 1];
-            stop.leave = t;
-            stop_multimap.insert(train.stations[j], stop);
-            t += train.travelTimes[j];
+        for (Date date = train.beginDate; date <= train.endDate; ++date) {
+            index.date = date;
+            seats_map.assign(index, seat);
+            Date_Time t = {date, train.startTime};
+            stop.index = 0;
+            stop.startDate = date;
+            stop.arrive = stop.leave = t;
+            stop_multimap.insert(train.stations[0], stop);
+            t += train.travelTimes[0];
+            for (int j = 1; j < train.stationNum; ++j) {
+                stop.index = j;
+                stop.arrive = t;
+                if (j != train.stationNum - 1) t += train.stopoverTimes[j - 1];
+                stop.leave = t;
+                stop_multimap.insert(train.stations[j], stop);
+                t += train.travelTimes[j];
+            }
         }
         return 0;
     }
@@ -106,23 +112,23 @@ public:
         ustring id(i);
         Train train;
         if (released_trains.find(id, train)) { //released train find
-            if (train.beginDate != d) {
+            if (d < train.beginDate || d > train.endDate) {
                 std::cout << "-1\n";
                 return;
             }
             Index index{id, d};
-            output_query_train(train, seats_map[index]);
+            output_query_train(train, seats_map[index], d);
         } else {
             if (!train_map.find(id, train)) { //no find
                 std::cout << "-1\n";
                 return;
             }
-            if (train.beginDate != d) {
+            if (d < train.beginDate || d > train.endDate) {
                 std::cout << "-1\n";
                 return;
             }
             Seat seat(train);
-            output_query_train(train, seat);
+            output_query_train(train, seat, d);
         }
     }
 
@@ -130,7 +136,7 @@ public:
         if (s == t) sjtu::error("query_ticket chaos: from same to same");
         sstring from(s), to(t);
         vector<Stop> stop1, stop2;
-        stop_multimap.find(from, stop1);
+        stop_multimap.find(from, stop1); //ascending in id
         stop_multimap.find(to, stop2);
         if (stop1.empty() || stop2.empty()) {
             std::cout << "0\n";
@@ -144,11 +150,11 @@ public:
             Stop tmp2 = *it2;
             if (tmp1 != tmp2) continue;
             if (tmp2.index < tmp1.index) continue;
-            if (date < tmp1.arrive.date || tmp1.leave.date < date) continue;
+            if (tmp1.leave.date != date) continue;
             //available train
             Train train = released_trains[tmp1.id];
             int price = train.getPrice(tmp1.index, tmp2.index - 1);
-            Seat seat = seats_map[Index{train.trainID, train.beginDate}];
+            Seat seat = seats_map[Index{tmp1.id, tmp1.startDate}];
             int seatNum = seat.min(tmp1.index, tmp2.index - 1);
             Ticket ticket(tmp1.id, tmp1.leave, tmp2.arrive, price, seatNum);
             tickets.push_back(ticket);
@@ -163,6 +169,7 @@ public:
 
     void buy_ticket(int timestamp, const std::string &u, const std::string &i, const Date &d, int n,
                     const std::string &f, const std::string &t, bool pend) {
+        //d represent the leaving date of from
         ustring username(u), id(i);
         sstring from(f), to(t);
         Train train;
@@ -176,7 +183,8 @@ public:
             std::cout << "-1\n";
             return;
         }
-        Index index = {id, train.beginDate};
+        int dayAfterBegin = d - start.date;
+        Index index = {id, train.beginDate + dayAfterBegin};
         Seat seat = seats_map[index];
         int remainNum = seat.min(l, r - 1);
         int price = train.getPrice(l, r - 1);
@@ -223,7 +231,7 @@ public:
                 if (remain >= tmp.num) {
                     seat.modify(l, r - 1, -tmp.num);
                     pending_order.erase(tmp.index, tmp);
-                    change_order_status(tmp,1);
+                    change_order_status(tmp, 1);
                 }
             }
             seats_map.assign(index, seat);
@@ -238,7 +246,7 @@ private:
 
     struct Index {
         ustring id;
-        Date date;
+        Date date; //start date
 
         inline bool operator<(const Index &index) const { return id < index.id; }
 
@@ -277,6 +285,7 @@ private:
 
     struct Stop {
         ustring id;
+        Date startDate; //train start date
         int index = 0; //station = train_map[id].stations[index]
         Date_Time arrive, leave;
 
@@ -370,7 +379,7 @@ private:
         return ta < tb;
     }
 
-    static inline void output_query_train(const Train &train, const Seat &seat);
+    static inline void output_query_train(const Train &train, const Seat &seat, const Date &date);
 
     static inline bool search_train_info(const Train &train, const sstring &f, const sstring &t, int &l, int &r,
                                          Date_Time &st, Date_Time &ed);
@@ -383,9 +392,9 @@ private:
 
 };
 
-void TrainSystem::output_query_train(const Train &train, const TrainSystem::Seat &seat) {
+void TrainSystem::output_query_train(const Train &train, const TrainSystem::Seat &seat, const Date &date) {
     std::cout << train.trainID << ' ' << train.type << '\n';
-    Date_Time t = {train.beginDate, train.startTime};
+    Date_Time t = {date, train.startTime};
     std::cout << train.stations[0] << " xx-xx xx:xx -> " << t << ' ' << train.prices[0] << ' ' << seat.remain[0]
               << '\n';
     t += train.travelTimes[0];
@@ -402,6 +411,7 @@ void TrainSystem::output_query_train(const Train &train, const TrainSystem::Seat
 
 bool TrainSystem::search_train_info(const Train &train, const TrainSystem::sstring &f, const TrainSystem::sstring &t,
                                     int &l, int &r, Date_Time &st, Date_Time &ed) {
+    //we search the first day train here
     Date_Time now = {train.beginDate, train.startTime};
     bool findl = false;
     for (int i = 0; i < train.stationNum; ++i) {
