@@ -351,18 +351,18 @@ bool TrainSystem::search_train_info(const Train &train, const TrainSystem::sstri
     Date_Time now = {train.beginDate, train.startTime};
     bool findl = false;
     for (int i = 0; i < train.stationNum; ++i) {
-        if (train.stations[i] == f) {
-            if (findl) sjtu::error("search train information chaos");
-            l = i;
-            st = now;
-            findl = true;
-        }
-        if (i && i < train.stationNum - 1) now += train.stopoverTimes[i - 1];
         if (train.stations[i] == t) {
             if (!findl) return false;
             r = i;
             ed = now;
             return true;
+        }
+        if (i && i < train.stationNum - 1) now += train.stopoverTimes[i - 1];
+        if (train.stations[i] == f) { //it's for station from where we need to wait for stopping
+            if (findl) sjtu::error("search train information chaos");
+            l = i;
+            st = now;
+            findl = true;
         }
         if (i < train.stationNum - 1) now += train.travelTimes[i];
     }

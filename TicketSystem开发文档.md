@@ -15,6 +15,25 @@
 
 ##### Train System
 
-train_map, released_trains (BPT) 分别存储未发布/已发布火车信息
+```c++
+my::BPT<ustring, Train> train_map; //未发布火车信息
+my::BPT<ustring, Train> released_trains;//已发布火车信息
+//不包含座位信息
+struct Index; //作为查询火车其他信息的索引(火车id，起始日期)
+struct Stop; //存储火车停靠站信息(id，站台index，到达和离开时间)
+my::BPT<Index, Seat> seats_map; 
+my::multiBPT<sstring, Stop> stop_multimap;
+//只记录已发布火车座位信息
+struct Ticket; //id，单价，剩余最大座位，到达和离开时间
+struct Order {
+    ustring username;
+    Index index;
+    int time = 0, status = 1, price = 0, num = 0; 
+    //status: 1-success, 0-pending, -1-refunded
+    sstring from, to;
+    Date_Time start, end;
+} //
+my::multiBPT<ustring, Order> order_u; //记录每个用户的所有订单
+my::multiBPT<Index, Order> pending_order; //记录候补队列
+```
 
-seats_map (BPT) 存储已发布火车的剩余座位信息
