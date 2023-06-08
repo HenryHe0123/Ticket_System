@@ -248,13 +248,13 @@ private:
         ustring id;
         Date date; //start date
 
-        inline bool operator<(const Index &index) const { return id < index.id; }
+        inline bool operator<(const Index &index) const { return id == index.id ? date < index.date : id < index.id; }
 
-        inline bool operator>(const Index &index) const { return id > index.id; }
+        inline bool operator>(const Index &index) const { return id == index.id ? date > index.date : id > index.id; }
 
-        inline bool operator>=(const Index &index) const { return id >= index.id; }
+        inline bool operator>=(const Index &index) const { return id == index.id ? date >= index.date : id > index.id; }
 
-        inline bool operator<=(const Index &index) const { return id <= index.id; }
+        inline bool operator<=(const Index &index) const { return id == index.id ? date <= index.date : id < index.id; }
 
         inline bool operator!=(const Index &index) const { return id != index.id || date != index.date; }
 

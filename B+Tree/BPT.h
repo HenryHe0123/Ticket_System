@@ -108,6 +108,7 @@ namespace my {
         constexpr static int firstNodeAddress = (sizeof(long) << 1) + sizeof(int);
         //we write root_pos, endAddress and size_ at the beginning of file
 
+        std::string filename;
         std::fstream file;
 
         long root_pos = 0;
@@ -228,7 +229,7 @@ namespace my {
 
     template<class K, class T>
     void BPT<K, T>::executeAll(void (*func)(const K &, const T &)) {
-        if(size_ == 0) return;
+        if (size_ == 0) return;
         Node tmp = root();
         int v;
         while (!tmp.isLeaf)
@@ -251,7 +252,7 @@ namespace my {
 
 
     template<class K, class T>
-    BPT<K, T>::BPT(const std::string &name):data(name + "_dataFile") { //open file
+    BPT<K, T>::BPT(const std::string &name):data(name + "_dataFile"), filename(name) { //open file
         file.open(name);
         if (file) {
             file.seekg(0);
@@ -389,7 +390,7 @@ namespace my {
         //
         int i = curNode.lowerBound(key);
         if (curNode.k[i] == key && i != curNode.size) {
-            std::cout << "BPT insert internal error: element to insert already exists" << std::endl;
+            std::cout << filename << " BPT insert internal error: element to insert already exists" << std::endl;
             throw sjtu::bpt_error();
         } //safety check
 

@@ -2,6 +2,7 @@
 #define TICKET_SYSTEM_MYSTRING_H
 
 #include <cstring>
+#include <string>
 
 namespace my {
 

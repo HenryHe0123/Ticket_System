@@ -64,6 +64,7 @@ namespace my {
         constexpr static int firstNodeAddress = (sizeof(long) << 1) + sizeof(int);
         //we write root_pos, endAddress and size_ at the beginning of file
 
+        std::string filename;
         std::fstream file;
 
         long root_pos = 0;
@@ -255,7 +256,7 @@ namespace my {
     //-----------------------------------core implement--------------------------------------------
 
     template<class K, class T>
-    multiBPT<K, T>::multiBPT(const std::string &name) { //open file
+    multiBPT<K, T>::multiBPT(const std::string &name):filename(name) { //open file
         file.open(name);
         if (file) {
             file.seekg(0);
