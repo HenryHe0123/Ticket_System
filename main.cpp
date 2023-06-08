@@ -254,7 +254,7 @@ void processLine(const std::string &line) {
         Date date(d);
         trainSystem.query_ticket(s, t, date, p == "time");
     } else if (token == "query_transfer") { //N
-        cout << "skip\n";
+        cout << "0\n";
     } else if (token == "buy_ticket") { //SF
         std::string u, i, d, f, t;
         bool q = false; //pending, initially false

@@ -136,7 +136,7 @@ public:
         if (s == t) sjtu::error("query_ticket chaos: from same to same");
         sstring from(s), to(t);
         vector<Stop> stop1, stop2;
-        stop_multimap.find(from, stop1); //ascending in id
+        stop_multimap.find(from, stop1); //ascending in {id,startDate}
         stop_multimap.find(to, stop2);
         if (stop1.empty() || stop2.empty()) {
             std::cout << "0\n";
@@ -184,7 +184,14 @@ public:
             return;
         }
         int dayAfterBegin = d - start.date;
-        Index index = {id, train.beginDate + dayAfterBegin};
+        Date startDate = train.beginDate + dayAfterBegin;
+        if (startDate < train.beginDate || startDate > train.endDate) { //check improper date!
+            std::cout << "-1\n";
+            return;
+        }
+        start.date += dayAfterBegin;
+        end.date += dayAfterBegin;
+        Index index = {id, startDate};
         Seat seat = seats_map[index];
         int remainNum = seat.min(l, r - 1);
         int price = train.getPrice(l, r - 1);
@@ -295,17 +302,25 @@ private:
 
         explicit Stop(const ustring &id) : id(id) {}
 
-        inline bool operator<(const Stop &stop) const { return id < stop.id; }
+        inline bool operator<(const Stop &stop) const {
+            return id == stop.id ? startDate < stop.startDate : id < stop.id;
+        }
 
-        inline bool operator>(const Stop &stop) const { return id > stop.id; }
+        inline bool operator>(const Stop &stop) const {
+            return id == stop.id ? startDate > stop.startDate : id > stop.id;
+        }
 
-        inline bool operator>=(const Stop &stop) const { return id >= stop.id; }
+        inline bool operator>=(const Stop &stop) const {
+            return id == stop.id ? startDate >= stop.startDate : id > stop.id;
+        }
 
-        inline bool operator<=(const Stop &stop) const { return id <= stop.id; }
+        inline bool operator<=(const Stop &stop) const {
+            return id == stop.id ? startDate <= stop.startDate : id < stop.id;
+        }
 
-        inline bool operator!=(const Stop &stop) const { return id != stop.id; }
+        inline bool operator!=(const Stop &stop) const { return id != stop.id || startDate != stop.startDate; }
 
-        inline bool operator==(const Stop &stop) const { return id == stop.id; }
+        inline bool operator==(const Stop &stop) const { return id == stop.id && startDate == stop.startDate; }
 
         friend std::ostream &operator<<(std::ostream &os, const Stop &stop) {
             os << stop.arrive << " -> " << stop.leave;
@@ -393,20 +408,22 @@ private:
 };
 
 void TrainSystem::output_query_train(const Train &train, const TrainSystem::Seat &seat, const Date &date) {
+    int price = 0; //prices accumulate!
     std::cout << train.trainID << ' ' << train.type << '\n';
     Date_Time t = {date, train.startTime};
-    std::cout << train.stations[0] << " xx-xx xx:xx -> " << t << ' ' << train.prices[0] << ' ' << seat.remain[0]
-              << '\n';
+    std::cout << train.stations[0] << " xx-xx xx:xx -> " << t << " 0 " << seat.remain[0] << '\n';
     t += train.travelTimes[0];
     for (int j = 1; j < train.stationNum - 1; ++j) {
         std::cout << train.stations[j] << ' ' << t << " -> ";
         t += train.stopoverTimes[j - 1];
-        std::cout << t << ' ' << train.prices[j] << ' ' << seat.remain[j] << '\n';
+        price += train.prices[j - 1];
+        std::cout << t << ' ' << price << ' ' << seat.remain[j] << '\n';
         t += train.travelTimes[j];
     }
     //j = stationNum - 1
+    price += train.prices[train.stationNum - 2];
     std::cout << train.stations[train.stationNum - 1] << ' ' << t << " -> xx-xx xx:xx "
-              << train.prices[train.stationNum - 1] << " x\n";
+              << price << " x\n";
 }
 
 bool TrainSystem::search_train_info(const Train &train, const TrainSystem::sstring &f, const TrainSystem::sstring &t,
