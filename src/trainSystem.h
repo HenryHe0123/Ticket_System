@@ -61,6 +61,8 @@ public:
         released_trains.clear();
         seats_map.clear();
         stop_multimap.clear();
+        order_u.clear();
+        pending_order.clear();
     }
 
     int add_train(const Train &train) {

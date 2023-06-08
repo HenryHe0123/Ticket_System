@@ -11,7 +11,7 @@ bool quit = false;
 void processLine(const std::string &line);
 
 int main() {
-    //freopen("../testcases/basic_1/1.in","r",stdin);
+    //freopen("testcases/basic_2/1.in","r",stdin);
     //freopen("test.out","w",stdout);
 
     std::ios::sync_with_stdio(false);
@@ -228,7 +228,7 @@ void processLine(const std::string &line) {
         Date date(d);
         trainSystem.query_train(i, d);
     } else if (token == "query_ticket") { //SF
-        std::string s, t, d, p;
+        std::string s, t, d, p = "time";
         while (scanner.hasMoreTokens()) {
             switch (scanner.getKey()) {
                 case 's':
@@ -285,14 +285,14 @@ void processLine(const std::string &line) {
         Date date(d);
         if (userSystem.logged_in(u))
             trainSystem.buy_ticket(timestamp, u, i, date, n, f, t, q);
-        else std::cout << "-1\n";
+        else cout << "-1\n";
     } else if (token == "query_order") { //F
         std::string u;
         if (scanner.getKey() != 'u') sjtu::error("query_order failed");
         u = scanner.nextToken();
         if (scanner.hasMoreTokens()) sjtu::error("query_order failed");
         if (userSystem.logged_in(u)) trainSystem.query_order(u);
-        else std::cout << "-1\n";
+        else cout << "-1\n";
     } else if (token == "refund_ticket") { //N
         std::string u;
         int n = 1;
@@ -308,7 +308,7 @@ void processLine(const std::string &line) {
                     sjtu::error("refund_ticket failed");
             }
         }
-        if (userSystem.logged_in(u)) std::cout << trainSystem.refund_ticket(u, n) << '\n';
-        else std::cout << "-1\n";
+        if (userSystem.logged_in(u)) cout << trainSystem.refund_ticket(u, n) << '\n';
+        else cout << "-1\n";
     } else sjtu::error("invalid command");
 }
