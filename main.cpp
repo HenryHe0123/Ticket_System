@@ -294,6 +294,21 @@ void processLine(const std::string &line) {
         if (userSystem.logged_in(u)) trainSystem.query_order(u);
         else std::cout << "-1\n";
     } else if (token == "refund_ticket") { //N
-
+        std::string u;
+        int n = 1;
+        while (scanner.hasMoreTokens()) {
+            switch (scanner.getKey()) {
+                case 'u':
+                    u = scanner.nextToken();
+                    break;
+                case 'n':
+                    n = stoi(scanner.nextToken());
+                    break;
+                default:
+                    sjtu::error("refund_ticket failed");
+            }
+        }
+        if (userSystem.logged_in(u)) std::cout << trainSystem.refund_ticket(u, n) << '\n';
+        else std::cout << "-1\n";
     } else sjtu::error("invalid command");
 }

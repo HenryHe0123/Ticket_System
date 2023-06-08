@@ -163,7 +163,6 @@ public:
                     const std::string &f, const std::string &t, bool pend) {
         ustring username(u), id(i);
         sstring from(f), to(t);
-        int tot = 0;
         Train train;
         if (!released_trains.find(id, train)) { //train no find
             std::cout << "-1\n";
@@ -179,7 +178,7 @@ public:
         Seat seat = seats_map[index];
         int remainNum = seat.min(l, r - 1);
         int price = train.getPrice(l, r - 1);
-        Order order(timestamp, price, n, username, index, from, to, start, end);
+        Order order(timestamp, price, n, username, index, from, to, start, end, l, r);
         if (remainNum >= n) {
             seat.modify(l, r - 1, -n);
             seats_map.assign(index, seat);
@@ -200,6 +199,35 @@ public:
         order_u.find(user, orders); //orders ascending
         std::cout << orders.size() << '\n';
         for (int i = orders.size() - 1; i >= 0; --i) std::cout << orders[i] << '\n';
+    }
+
+    int refund_ticket(const std::string &u, int n) {
+        ustring user(u);
+        vector<Order> orders;
+        order_u.find(user, orders);
+        int i = orders.size() - n;
+        if (i < 0 || n < 1 || orders[i].status == -1) return -1;
+        Order order = orders[i]; //copy
+        Index &index = order.index;
+        if (order.status == 0) pending_order.erase(index, order); //refund pending order
+        else { //refund success order
+            Seat seat = seats_map[index];
+            int &l = order.l, &r = order.r;
+            seat.modify(l, r - 1, order.num);
+            pending_order.find(index, orders);
+            for (auto tmp: orders) {
+                int remain = seat.min(l, r - 1);
+                if (remain == 0) break;
+                if (remain >= tmp.num) {
+                    seat.modify(l, r - 1, -tmp.num);
+                    pending_order.erase(tmp.index, tmp);
+                    change_order_status(tmp,1);
+                }
+            }
+            seats_map.assign(index, seat);
+        }
+        change_order_status(order, -1);
+        return 0;
     }
 
 private:
@@ -292,6 +320,7 @@ private:
         Index index;
         int time = 0, status = 1, price = 0, num = 0; //status: 1-success, 0-pending, -1-refunded
         sstring from, to;
+        int l = 0, r = 0; //index of from and right
         Date_Time start, end;
 
         Order() = default;
@@ -299,9 +328,9 @@ private:
         explicit Order(int time) : time(time) {}
 
         Order(int time, int p, int n, const ustring &u, Index index, const sstring &f, const sstring &t,
-              const Date_Time &st, const Date_Time &ed) : time(time), num(n), price(p),
-                                                          username(u), index(std::move(index)), from(f), to(t),
-                                                          start(st), end(ed) {}
+              const Date_Time &st, const Date_Time &ed, int l, int r) : time(time), num(n), price(p),
+                                                                        username(u), index(std::move(index)), from(f),
+                                                                        to(t), start(st), end(ed), l(l), r(r) {}
 
         inline bool operator<(const Order &order) const { return time < order.time; }
 
@@ -343,6 +372,12 @@ private:
 
     static inline bool search_train_info(const Train &train, const sstring &f, const sstring &t, int &l, int &r,
                                          Date_Time &st, Date_Time &ed);
+
+    inline void change_order_status(Order &order, int status) {
+        order_u.erase(order.username, order);
+        order.status = status;
+        order_u.insert(order.username, order);
+    }
 
 };
 
