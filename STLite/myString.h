@@ -91,13 +91,19 @@ namespace my {
 
         inline bool operator<=(const char *s) const { return strcmp(str, s) <= 0; }
 
-        [[nodiscard]] bool empty() const { return !str[0]; }
+        [[nodiscard]] inline bool empty() const { return !str[0]; }
 
         void clear() { memset(str, 0, sizeof(str)); }
 
         inline int size() { return strlen(str); }
 
         inline char *c_str() { return str; }
+
+        [[nodiscard]] inline int hash() const { //Justin Sobel Hash Function
+            int h = 1315423911;
+            for (const char *s = str; *s; ++s) h ^= (h << 5) + *s + (h >> 2);
+            return h & 0x7fffffff;
+        }
 
     };
 

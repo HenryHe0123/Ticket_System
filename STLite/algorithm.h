@@ -5,13 +5,16 @@
 #include "exceptions.hpp"
 #include "vector.hpp"
 
-template<size_t N, class T>
+template<class T, size_t N = 2017>
 struct HashMap {
     //need extra hash function
     //the original hash_value should not be same
+    //some example N for chose: 599,1013,2017,4099,9001
+    //provide a fast query of variables
 private:
     int begin[N]{0}, next[N]{0}, id[N]{0}, waste[N]{0}, node_cnt = 0, waste_top = 0;
     //id[i] for original hash_value
+    //begin[hash] for the index where the first variable store
     T val[N]{};
 public:
     HashMap() = default;

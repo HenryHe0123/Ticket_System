@@ -71,6 +71,17 @@ namespace my {
 
         void executeAll(void (*func)(const K &key, const T &value));
 
+        long findAddress(const K &key) {
+            if (size_ == 0) return 0;
+            Node tmp;
+            findLeafNode(key, tmp);
+            int i = tmp.lowerBound(key);
+            if (tmp.k[i] != key || i == tmp.size) return 0;
+            return tmp.ptr[i];
+        }
+
+        inline void getData(long address, T &output) const { data.read(address, output); }
+
         /*
         void showAllElements() { //for debug use
             std::cout << "debug: show all elements---------------\n";
