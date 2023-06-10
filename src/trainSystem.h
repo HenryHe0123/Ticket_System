@@ -419,6 +419,7 @@ private:
         int time = 0;
         int price = 0;
         sstring common;
+        int wait = 0;
     };
 
     static inline bool cmp_transfer(const Transfer &a, const Transfer &b, bool time) { //return a<b
@@ -515,10 +516,11 @@ void TrainSystem::query_transfer(const std::string &s, const std::string &t, con
             if (hashmap_station.has(train.stations[i].hash())) {
                 auto p = hashmap_station.query(train.stations[i].hash());
                 for (const auto &info: *p) {
-                    if (info.arrive > leave) continue;
+                    int waitTime = leave - info.arrive;
+                    if (waitTime < 0) continue;
                     if (info.id == stop.id) continue;
-                    tmp = {info.id, stop.id, info.timecost + timecost + (leave - info.arrive),
-                           info.cost + price, train.stations[stop.index]};
+                    tmp = {info.id, stop.id, info.timecost + timecost + waitTime,
+                           info.cost + price, train.stations[i], waitTime};
                     if (best == nullptr) best = new Transfer(tmp); //init
                     else if (cmp_transfer(tmp, *best, sortInTime))
                         *best = tmp; //update
@@ -556,7 +558,7 @@ void TrainSystem::query_transfer(const std::string &s, const std::string &t, con
               << ed1 << ' ' << price << ' ' << seatNum << '\n';
     //output train2
     price = train2.getPrice(l2, r2 - 1);
-    dayAfterBegin = ed1.date - st2.date + (ed1.time >= st2.time); //ed1->st2, st2.d = ed1.d + (ed1.t>=st2.t)
+    dayAfterBegin = (ed1 + best->wait).date - st2.date; //ed1->st2, st2 = ed1 + wait
     st2.date += dayAfterBegin;
     ed2.date += dayAfterBegin;
     startDate = train2.beginDate + dayAfterBegin;
