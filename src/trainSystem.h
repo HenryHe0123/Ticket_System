@@ -233,7 +233,8 @@ public:
             Seat seat = seats_map[index];
             seat.modify(order.l, order.r - 1, order.num);
             pending_order.find(index, orders);
-            for (auto tmp: orders) {
+            for (auto &tmp: orders) { //orders is a tmp vector in RAM
+                if (tmp.l >= order.r || tmp.r <= tmp.l) continue; //for faster
                 int remain = seat.min(tmp.l, tmp.r - 1);
                 if (remain >= tmp.num) {
                     seat.modify(tmp.l, tmp.r - 1, -tmp.num);

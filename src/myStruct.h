@@ -201,7 +201,7 @@ struct Date_Time {
 
 //-------------------------------------------------------------------------------------------
 
-template<class T, size_t N = 2017>
+template<class T, size_t N = 10007>
 class TransferMap { //special HashMap(multi) for transfer without delete
 private:
     int begin[N]{0}, next[N]{0}, originHash[N]{0}, cnt = 0;
