@@ -81,7 +81,7 @@ public:
         if (!train_map.count(id) || released_trains.count(id)) return -1;
         Train train = train_map[id];
         train_map.erase(id);
-        released_trains.assign(id, train);
+        released_trains.assign(id, train); //released_trains modify only for here
         //add Seat and Stop information
         Seat seat(train);
         Index index;
@@ -111,7 +111,7 @@ public:
     void query_train(const std::string &i, const Date &d) {
         ustring id(i);
         Train train;
-        if (released_trains.find(id, train)) { //released train find
+        if (find_released_train(id, train)) { //released train find
             if (d < train.beginDate || d > train.endDate) {
                 std::cout << "-1\n";
                 return;
@@ -152,7 +152,7 @@ public:
             if (tmp1 != tmp2) continue;
             if (tmp2.index < tmp1.index) continue;
             //available train
-            Train train = released_trains[tmp1.id];
+            Train train = released_train(tmp1.id);
             int price = train.getPrice(tmp1.index, tmp2.index - 1);
             Seat seat = seats_map[Index{tmp1.id, tmp1.startDate}];
             int seatNum = seat.min(tmp1.index, tmp2.index - 1);
@@ -175,7 +175,7 @@ public:
         ustring username(u), id(i);
         sstring from(f), to(t);
         Train train;
-        if (!released_trains.find(id, train)) { //train no find
+        if (!find_released_train(id, train)) { //train no find
             std::cout << "-1\n";
             return;
         }
@@ -431,7 +431,34 @@ private:
         if (time) return a.time == b.time ? a.price < b.price : a.time < b.time;
         else return a.price == b.price ? a.time < b.time : a.price < b.price;
     }
+
+    InterCache<Train> released_train_cache;
+
+    bool find_released_train(const ustring &id, Train &train) {
+        int hash = id.hash();
+        if (released_train_cache.has(hash)) {
+            train = released_train_cache.get(hash);
+            return true;
+        } else if (released_trains.find(id, train)) {
+            released_train_cache.add(hash, train);
+            return true;
+        } else return false;
+    }
+
+    Train released_train(const ustring &id) {
+        int hash = id.hash();
+        if (released_train_cache.has(hash)) return released_train_cache.get(hash);
+        else {
+            Train train;
+            released_trains.find(id, train);
+            released_train_cache.add(hash, train);
+            return train;
+        }
+    }
+
 };
+
+//-------------------------------------------------------------------
 
 void TrainSystem::output_query_train(const Train &train, const TrainSystem::Seat &seat, const Date &date) {
     int price = 0; //prices accumulate!
@@ -489,7 +516,7 @@ void TrainSystem::query_transfer(const std::string &s, const std::string &t, con
     TransferMap<transferInfo> hashmap_station;
     for (const auto &stop: stops1) {
         if (stop.leave.date != date) continue;
-        Train train = released_trains[stop.id];
+        Train train = released_train(stop.id);
         int price = 0;
         int timecost = 0;
         Date_Time leave = stop.leave;
@@ -506,7 +533,7 @@ void TrainSystem::query_transfer(const std::string &s, const std::string &t, con
     for (const auto &stop: stops2) {
         if (stop.arrive.date < date) continue;
         if (stop.id != lastID) { //new id
-            train = released_trains[stop.id];
+            train = released_train(stop.id);
             lastID = stop.id;
         }
         int price = 0;
@@ -543,8 +570,8 @@ void TrainSystem::query_transfer(const std::string &s, const std::string &t, con
     }
     //now we got best transfer
     //read train1 & train2
-    Train train1 = released_trains[best->id1];
-    Train train2 = released_trains[best->id2];
+    Train train1 = released_train(best->id1);
+    Train train2 = released_train(best->id2);
     //search_train_info with from & to & common
     int l1, l2, r1, r2;
     Date_Time st1, st2, ed1, ed2;

@@ -99,9 +99,9 @@ namespace my {
 
         inline char *c_str() { return str; }
 
-        [[nodiscard]] inline int hash() const { //Justin Sobel Hash Function
-            int h = 1315423911;
-            for (const char *s = str; *s; ++s) h ^= (h << 5) + *s + (h >> 2);
+        [[nodiscard]] inline int hash() const { //Daniel J. Bernstein Hash Function
+            int h = 5381;
+            for (const char *s = str; *s; ++s) h += (h << 5) + *s;
             return h & 0x7fffffff;
         }
 

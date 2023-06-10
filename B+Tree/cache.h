@@ -83,6 +83,8 @@ private:
     std::fstream file;
 };
 
+//Cache for file
+
 template<class T, size_t N = 32>
 class Cache { //LRU
 private:
@@ -148,6 +150,61 @@ private:
         f.read(addr, val[tmp]);
         index.insert(addr, tmp);
         return val[tmp];
+    }
+
+};
+
+//Cache for internal
+
+template<class T, size_t N = 64>
+class InterCache { //LRU
+private:
+    HashMapL<1013> index; //hash as address
+    T val[N]{};
+    int head = -1, tail = -1, size = 0, pre[N]{0}, to[N]{0}, h[N]{0};
+public:
+    InterCache() {
+        memset(pre, -1, sizeof(pre));
+        memset(to, -1, sizeof(to));
+    };
+
+    bool has(int hash) { return index.has(hash); }
+
+    T &get(int hash) {
+        int i = index[hash];
+        if (i == head) return val[i];
+        if (~pre[i]) to[pre[i]] = to[i]; //pre[i] != -1
+        if (~to[i]) pre[to[i]] = pre[i];
+        if (i == tail) tail = pre[i]; //delete i in list
+        pre[i] = -1;
+        to[i] = head;
+        pre[head] = i;
+        head = i; //add i to head
+        return val[i];
+    }
+
+    void add(int hash, const T &v) { //add v to InterCache
+        int tmp; //new index for v
+        if (size == N) {
+            index.del(h[tail], tail);
+            tmp = tail;
+            tail = pre[tail];
+            to[tail] = -1; //get tmp out of tail
+            pre[head] = tmp;
+            pre[tmp] = -1;
+            to[tmp] = head;
+            head = tmp; //add tmp to head
+        } else {
+            tmp = size++;
+            if (~head) { //not empty
+                pre[head] = tmp;
+                to[tmp] = head;
+            } else tail = tmp;
+            head = tmp;
+        } //now tmp available for v as head
+        h[tmp] = hash;
+        val[tmp] = v;
+        index.insert(hash, tmp);
     }
 
 };
