@@ -8,6 +8,7 @@
 #include "../STLite/vector.hpp"
 #include "../STLite/exceptions.hpp"
 #include "data.h"
+#include "cache.h"
 
 /*
  * Class: my::BPT
@@ -82,36 +83,8 @@ namespace my {
 
         inline void getData(long address, T &output) const { data.read(address, output); }
 
-        /*
-        void showAllElements() { //for debug use
-            std::cout << "debug: show all elements---------------\n";
-            Node tmp = root();
-            int v;
-            while (!tmp.isLeaf)
-                readNode(tmp.ptr[0], tmp);
-
-            //std::cout << "fa_pos: " << tmp.fa << "   ";
-            for (int i = 0; i < tmp.size; ++i) {
-                data.read(tmp.ptr[i], v);
-                std::cout << tmp.k[i] << '+' << v << "   ";
-            }
-            std::cout << '\n';
-
-            while (tmp.ptr[Degree]) {
-                readNode(tmp.ptr[Degree], tmp);
-                //std::cout << "fa_pos: " << tmp.fa << "   ";
-                for (int i = 0; i < tmp.size; ++i) {
-                    data.read(tmp.ptr[i], v);
-                    std::cout << tmp.k[i] << '+' << v << "   ";
-                }
-                std::cout << '\n';
-            }
-            std::cout << "showing finished----------------------\n" << std::endl;
-        }
-         */
-
     private:
-        constexpr static int halfBlockSize = 1950 / (sizeof(long) + sizeof(K));
+        constexpr static int halfBlockSize = 4000 / (sizeof(long) + sizeof(K));
 
         constexpr static int Degree = halfBlockSize << 1 | 1; //odd number required here
         //we keep one empty space for split
@@ -181,21 +154,22 @@ namespace my {
             }
         };
 
+        Cache<Node> cache;
+
         inline void readNode(long address, Node &node) {
-            file.seekg(address);
-            file.read(reinterpret_cast<char *>(&node), sizeof(Node));
+            node = cache[address];
         }
 
         inline void writeNode(long address, const Node &node) {
-            file.seekp(address);
-            file.write(reinterpret_cast<const char *>(&node), sizeof(Node));
+            if (cache.has(address))
+                cache.get(address) = node;
+            else {
+                file.seekp(address);
+                file.write(reinterpret_cast<const char *>(&node), sizeof(Node));
+            }
         }
 
-        inline Node root() {
-            Node node;
-            readNode(root_pos, node);
-            return node;
-        }
+        inline Node root() { return cache[root_pos]; }
 
         long findLeafNode(const K &key, Node &node) { //get required node in node
             if (size_ == 0) {
@@ -279,6 +253,7 @@ namespace my {
             file.close();
             file.open(name);
         }
+        cache.init(name);
     }
 
     template<class K, class T>
@@ -303,7 +278,7 @@ namespace my {
 
     template<class K, class T>
     T BPT<K, T>::operator[](const K &key) {
-        if (size_ == 0) error("invalid use of BPT[] with key not exists");
+        if (size_ == 0) error("invalid use of BPT[] when empty)");
         Node tmp;
         findLeafNode(key, tmp);
         int i = tmp.lowerBound(key);

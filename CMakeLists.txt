@@ -22,4 +22,5 @@ add_executable(code
         src/simpleScanner.h
         src/userSystem.h
         src/trainSystem.h
-        src/myStruct.h)
+        src/myStruct.h
+        B+Tree/cache.h)

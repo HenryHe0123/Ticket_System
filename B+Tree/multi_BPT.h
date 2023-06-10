@@ -56,7 +56,7 @@ namespace my {
         }
 
     private:
-        constexpr static int halfBlockSizeForMulti = 1950 / (sizeof(long) + sizeof(K) + sizeof(T));
+        constexpr static int halfBlockSizeForMulti = 4000 / (sizeof(long) + sizeof(K) + sizeof(T));
 
         constexpr static int Degree = halfBlockSizeForMulti << 1 | 1; //odd number required here
         //we keep one empty space for split
