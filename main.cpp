@@ -11,9 +11,6 @@ bool quit = false;
 void processLine(const std::string &line);
 
 int main() {
-    //freopen("testcases/basic_2/1.in", "r", stdin);
-    //freopen("test.out", "w", stdout);
-
     std::ios::sync_with_stdio(false);
     std::cin.tie(nullptr);
     std::cout.tie(nullptr);

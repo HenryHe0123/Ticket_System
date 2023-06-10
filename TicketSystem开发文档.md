@@ -20,7 +20,7 @@ class Train {
 	my::string<20> trainID;
     int stationNum = 2; //2 ~ N
     my::string<30> stations[N];
-    int seat = 0;
+    int seat = 0; //总计座位
     int prices[N]{0}; //stationNum - 1
     Time startTime; //for every day during Date begin to end!
     int travelTimes[N]{0}, stopoverTimes[N]{0}; //stationNum - 1/2

@@ -179,6 +179,10 @@ public:
             std::cout << "-1\n";
             return;
         }
+        if (train.seat < n) { //n more than maximum seat (Accuse: why not showed clearly at the document?!)
+            std::cout << "-1\n";
+            return;
+        }
         int l = -1, r = -1;
         Date_Time start, end;
         if (!search_train_info(train, from, to, l, r, start, end)) {
@@ -451,7 +455,7 @@ void TrainSystem::output_query_train(const Train &train, const TrainSystem::Seat
 bool TrainSystem::search_train_info(const Train &train, const TrainSystem::sstring &f, const TrainSystem::sstring &t,
                                     int &l, int &r, Date_Time &st, Date_Time &ed) {
     //we search the first day train here
-    Date_Time now = {train.beginDate, train.startTime};
+    Date_Time now = {train.beginDate, train.startTime}; //leave
     bool findl = false;
     for (int i = 0; i < train.stationNum; ++i) {
         if (train.stations[i] == t) {
@@ -460,14 +464,14 @@ bool TrainSystem::search_train_info(const Train &train, const TrainSystem::sstri
             ed = now;
             return true;
         }
-        if (i && i < train.stationNum - 1) now += train.stopoverTimes[i - 1];
+        if (i && i < train.stationNum - 1) now += train.stopoverTimes[i - 1]; //leave
         if (train.stations[i] == f) { //it's for station from where we need to wait for stopping
             if (findl) sjtu::error("search train information chaos");
             l = i;
             st = now;
             findl = true;
         }
-        if (i < train.stationNum - 1) now += train.travelTimes[i];
+        if (i < train.stationNum - 1) now += train.travelTimes[i]; //arrive
     }
     return false;
 }
