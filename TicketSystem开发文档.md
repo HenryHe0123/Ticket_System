@@ -43,9 +43,9 @@ struct Order {
     int time = 0, status = 1, price = 0, num = 0; //price指单价，num指票数
     //status: 1-success, 0-pending, -1-refunded
     sstring from, to;
-    int l = 0, r = 0; //index of from and right
+    int l = 0, r = 0; //index of from and to
     Date_Time start, end;
-} //按time排序
+} //按time(stamp)排序
 my::multiBPT<ustring, Order> order_u; //记录每个用户的所有订单
 my::multiBPT<Index, Order> pending_order; //记录候补队列
 struct transferInfo; //火车id，抵达时间，花费时间，价格（用于transfer查询中的匹配）

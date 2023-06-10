@@ -231,14 +231,12 @@ public:
         if (order.status == 0) pending_order.erase(index, order); //refund pending order
         else { //refund success order
             Seat seat = seats_map[index];
-            int &l = order.l, &r = order.r;
-            seat.modify(l, r - 1, order.num);
+            seat.modify(order.l, order.r - 1, order.num);
             pending_order.find(index, orders);
             for (auto tmp: orders) {
-                int remain = seat.min(l, r - 1);
-                if (remain == 0) break;
+                int remain = seat.min(tmp.l, tmp.r - 1);
                 if (remain >= tmp.num) {
-                    seat.modify(l, r - 1, -tmp.num);
+                    seat.modify(tmp.l, tmp.r - 1, -tmp.num);
                     pending_order.erase(tmp.index, tmp);
                     change_order_status(tmp, 1);
                 }
@@ -564,7 +562,7 @@ void TrainSystem::query_transfer(const std::string &s, const std::string &t, con
     if (startDate < train2.beginDate || startDate > train2.endDate) {
         sjtu::error("query_transfer chaos2: best transfer found but wrong");
     } //safety check
-    seat = seats_map[Index{best->id2,startDate}];
+    seat = seats_map[Index{best->id2, startDate}];
     seatNum = seat.min(l2, r2 - 1);
     std::cout << best->id2 << ' ' << best->common << ' ' << st2 << " -> " << t << ' '
               << ed2 << ' ' << price << ' ' << seatNum << '\n';
