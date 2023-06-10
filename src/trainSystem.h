@@ -526,8 +526,11 @@ void TrainSystem::query_transfer(const std::string &s, const std::string &t, con
                         *best = tmp; //update
                 }
             }
-            timecost += train.stopoverTimes[i];
-            leave -= train.stopoverTimes[i]; //arriving time of station[i]
+            if (i) {
+                timecost += train.stopoverTimes[i - 1];
+                leave -= train.stopoverTimes[i - 1]; //arriving time of station[i]
+                //stopoverTime[i] represent stop time in i+1 and i+2
+            }
         }
     }
     if (best == nullptr) {

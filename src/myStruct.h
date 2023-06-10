@@ -184,7 +184,7 @@ struct Date_Time {
 
     inline Date_Time operator-(int x) { return this->operator+(-x); }
 
-    inline int operator-(const Date_Time &dt) const { return (date - dt.date) * 24 * 60 + (time - dt.time); }
+    inline int operator-(const Date_Time &dt) const { return (date - dt.date) * 1440 + (time - dt.time); }
 
     inline bool operator<(const Date_Time &t) const { return (date == t.date) ? (time < t.time) : (date < t.date); }
 
