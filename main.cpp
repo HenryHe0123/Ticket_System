@@ -17,14 +17,9 @@ int main() {
     std::string input;
     while (!quit) {
         if (std::cin.eof()) break;
-        try {
-            getline(std::cin, input);
-            if (input.empty()) continue;
-            processLine(input);
-        } catch (sjtu::exception &ex) {
-            cout << "Error: " << ex.what() << std::endl;
-            return 19260817;
-        }
+        getline(std::cin, input);
+        if (input.empty()) continue;
+        processLine(input);
     }
     return 0;
 }

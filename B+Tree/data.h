@@ -4,63 +4,11 @@
 #include <cstring>
 #include <fstream>
 #include "../STLite/exceptions.hpp"
+#include "cache.h"
 
 using std::fstream;
 
-/*
- * Class: my::Data
- * ---------------------
- * This class similarly implements the functions of vector.
- * Typical usage of which looks like this:
- *
- *    myData<value_type> data("data");
- *
- *    data.push_back(value);
- *
- *    data.pop_back(); //do nothing if empty
- *
- *    if(data.empty()) {...}
- *
- *    int size = data.size();
- *
- *    tmp_value = data[i];
- *
- *    tmp_value = data.back();
- *
- *    data.assign(i,value);
- *
- *    void func(const value_type &);
- *    map.execute(func,cnt); //execute func for the last cnt value
- *    map.execute(func); //execute func for all value
- *
- */
 namespace my {
-
-    template<class value_type>
-    class File;
-
-    template<class value_type>
-    class Data : public File<value_type> {
-    public:
-        explicit Data(const std::string &name) : File<value_type>(name) {}
-
-        ~Data() { this->file.close(); }
-
-        void push_back(const value_type &value) { this->add(value); }
-
-        void pop_back() { this->del(); } //do nothing if empty
-
-        inline int size() { return (this->end_address() - sizeof(long)) / sizeof(value_type); }
-
-        value_type operator[](int i);
-
-        value_type back();
-
-        void assign(int i, const value_type &value);
-
-        void execute(void (*func)(const value_type &value), int cnt = -1); //execute all when cnt = -1
-
-    };
 
 /*
  * Class: my::File
@@ -92,6 +40,8 @@ namespace my {
 
     protected:
         fstream file;
+        //long endAddress = sizeof(long);
+        //Cache<value_type, 128> cache;
     };
 
 //----------------------------------------------------------------------------
@@ -167,48 +117,6 @@ namespace my {
         long endAddress = 0;
         file.read(reinterpret_cast <char *> (&endAddress), sizeof(long));
         return endAddress == sizeof(long);
-    }
-
-    template<class value_type>
-    value_type Data<value_type>::operator[](int i) {
-        if (i >= size() || i < 0) sjtu::error("Data: index out of range");
-        long address = sizeof(long) + i * sizeof(value_type);
-        this->file.seekg(address);
-        value_type value;
-        this->file.read(reinterpret_cast <char *> (&value), sizeof(value_type));
-        return value;
-    }
-
-    template<class value_type>
-    value_type Data<value_type>::back() {
-        long endAddress = this->end_address();
-        if (endAddress == sizeof(long)) sjtu::error("Data: empty data has no back");
-        this->file.seekg(endAddress - sizeof(value_type));
-        value_type value;
-        this->file.read(reinterpret_cast <char *> (&value), sizeof(value_type));
-        return value;
-    }
-
-    template<class value_type>
-    void Data<value_type>::assign(int i, const value_type &value) {
-        if (i >= size() || i < 0) sjtu::error("Data: index out of range");
-        long address = sizeof(long) + i * sizeof(value_type);
-        this->file.seekp(address);
-        this->file.write(reinterpret_cast <char *> (&value), sizeof(value_type));
-    }
-
-    template<class value_type>
-    void Data<value_type>::execute(void (*func)(const value_type &), int cnt) {
-        if (!cnt) return;
-        if (cnt == -1) cnt = size();
-        if (cnt > size() || cnt < 0) sjtu::error("Data: invalid count");
-        long address = sizeof(long) + (size() - cnt) * sizeof(value_type);
-        this->file.seekg(address);
-        value_type value;
-        for (int i = 0; i < cnt; ++i) {
-            this->file.read(reinterpret_cast <char *> (&value), sizeof(value_type));
-            func(value);
-        }
     }
 
 }

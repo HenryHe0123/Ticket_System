@@ -16,7 +16,7 @@
  * This class similarly implements the functions of map.
  * Typical usage of which looks like this:
  *
- *    BPT<key_type,value_type> map("file");
+ *    BPT<key_type, value_type> map("file");
  *
  *    map.assign(key,value); //override if element already exists
  *
@@ -51,7 +51,7 @@ namespace my {
 
         void assign(const K &key, const T &value);
 
-        bool erase(const K &key); //return false if element not found
+        bool erase(const K &key); //return false if the element not found
 
         bool find(const K &key, T &output); //return false if element no find (no change to output)
 
@@ -108,7 +108,7 @@ namespace my {
 
             K k[Degree]{};
 
-            long ptr[Degree + 1]{0}; // when node is leaf, ptr[Degree] points to next leaf
+            long ptr[Degree + 1]{0}; // when the node is leaf, ptr[Degree] points to the next leaf
 
             Node() = default;
 
@@ -329,7 +329,7 @@ namespace my {
 
         if (tmp.size < Degree) {
             writeNode(tmp_pos, tmp);
-        } else { //we have to split node now
+        } else { //we have to split the node now
             Node newLeaf; //at right
             newLeaf.size = tmp.size - halfBlockSize;
             tmp.size = halfBlockSize;
@@ -447,7 +447,7 @@ namespace my {
     }
 
     template<class K, class T>
-    void BPT<K, T>::eraseAdjust(long address, BPT::Node &node) { //node is a leaf and not root
+    void BPT<K, T>::eraseAdjust(long address, BPT::Node &node) { //node is a leaf and not a root
         Node faNode;
         readNode(node.fa, faNode);
         int i = faNode.upperBound(node.k[0]) - 1; //maybe -1
@@ -455,7 +455,7 @@ namespace my {
         if (i != faNode.size - 1) right_pos = faNode.ptr[i + 2];
         if (i >= 0) left_pos = faNode.ptr[i];
         Node rightNode;
-        if (right_pos) { //check if borrow from right available
+        if (right_pos) { //check if borrow from the right available
             readNode(right_pos, rightNode);
             if (rightNode.size > halfBlockSize) { //borrow successfully
                 node.k[node.size] = rightNode.k[0];
@@ -470,7 +470,7 @@ namespace my {
             }
         }
         Node leftNode;
-        if (left_pos) { //check if borrow from left available
+        if (left_pos) { //check if borrow from the left available
             readNode(left_pos, leftNode);
             if (leftNode.size > halfBlockSize) { //borrow successfully
                 for (int j = node.size++; j > 0; --j) {
@@ -545,7 +545,7 @@ namespace my {
         if (i != faNode.size - 1) right_pos = faNode.ptr[i + 2];
         if (i >= 0) left_pos = faNode.ptr[i];
         Node rightNode;
-        if (right_pos) { //check if borrow from right available
+        if (right_pos) { //check if borrow from the right available
             readNode(right_pos, rightNode);
             if (rightNode.size > halfBlockSize) { //borrow successfully
                 Node son;
@@ -568,7 +568,7 @@ namespace my {
             }
         }
         Node leftNode;
-        if (left_pos) { //check if borrow from left available
+        if (left_pos) { //check if borrow from the left available
             readNode(left_pos, leftNode);
             if (leftNode.size > halfBlockSize) { //borrow successfully
                 Node son;

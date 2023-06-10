@@ -85,7 +85,7 @@ private:
 
 //Cache for file
 
-template<class T, size_t N = 32>
+template<class T, size_t N = 48>
 class Cache { //LRU
 private:
     HashMapL<> index;
@@ -156,7 +156,7 @@ private:
 
 //Cache for internal
 
-template<class T, size_t N = 64>
+template<class T, size_t N = 48>
 class InterCache { //LRU
 private:
     HashMapL<1013> index; //hash as address
