@@ -254,7 +254,27 @@ void processLine(const std::string &line) {
         Date date(d);
         trainSystem.query_ticket(s, t, date, p == "time");
     } else if (token == "query_transfer") { //N
-        cout << "0\n";
+        std::string s, t, d, p = "time";
+        while (scanner.hasMoreTokens()) {
+            switch (scanner.getKey()) {
+                case 's':
+                    s = scanner.nextToken();
+                    break;
+                case 't':
+                    t = scanner.nextToken();
+                    break;
+                case 'd':
+                    d = scanner.nextToken();
+                    break;
+                case 'p':
+                    p = scanner.nextToken();
+                    break;
+                default:
+                    sjtu::error("query_transfer failed");
+            }
+        }
+        Date date(d);
+        trainSystem.query_transfer(s, t, date, p == "time");
     } else if (token == "buy_ticket") { //SF
         std::string u, i, d, f, t;
         bool q = false; //pending, initially false

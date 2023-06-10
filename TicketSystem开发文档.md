@@ -7,7 +7,7 @@
 3. 火车系统：添加、删除、发布、查询火车、查询车票、查询换乘
 4. 火车交互系统：购买车票、查询订单、退订
 
-#### 主题逻辑说明
+#### 主题结构说明
 
 ##### User System
 
@@ -48,5 +48,15 @@ struct Order {
 } //按time排序
 my::multiBPT<ustring, Order> order_u; //记录每个用户的所有订单
 my::multiBPT<Index, Order> pending_order; //记录候补队列
+struct transferInfo; //火车id，抵达时间，花费时间，价格（用于transfer查询中的匹配）
+struct Transfer; //id1，id2，总时间，总价格，换乘站
 ```
+
+#### 关键函数逻辑说明
+
+##### query_transfer
+
+首先查询起始和终点站的所有火车停靠信息，遍历经过起始站的所有火车的后续站，并用hash-map存储信息（key: 站名，val:  vector<火车id，抵达时间，花费时间，价格>）。
+
+再遍历经过终点站的所有火车的前序站，检查是否在hash-map中存在，若存在则读取vector（的指针），检查每辆火车的时间是否合适，并更新最优解。
 

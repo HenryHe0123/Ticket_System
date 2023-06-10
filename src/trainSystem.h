@@ -145,12 +145,12 @@ public:
         vector<Ticket> tickets;
         auto it2 = stop2.begin();
         for (const auto &tmp1: stop1) {
+            if (tmp1.leave.date != date) continue;
             while (it2 != stop2.end() && *it2 < tmp1) ++it2;
             if (it2 == stop2.end()) break;
             Stop tmp2 = *it2;
             if (tmp1 != tmp2) continue;
             if (tmp2.index < tmp1.index) continue;
-            if (tmp1.leave.date != date) continue;
             //available train
             Train train = released_trains[tmp1.id];
             int price = train.getPrice(tmp1.index, tmp2.index - 1);
@@ -166,6 +166,8 @@ public:
                       << ticket.end << ' ' << ticket.price << ' ' << ticket.seat << '\n';
         }
     }
+
+    void query_transfer(const std::string &s, const std::string &t, const Date &date, bool sortInTime);
 
     void buy_ticket(int timestamp, const std::string &u, const std::string &i, const Date &d, int n,
                     const std::string &f, const std::string &t, bool pend) {
@@ -405,6 +407,26 @@ private:
         order_u.insert(order.username, order);
     }
 
+    struct transferInfo {
+        Date_Time arrive;
+        int timecost = 0;
+        int cost = 0;
+        ustring id;
+    };
+
+    struct Transfer {
+        ustring id1;
+        ustring id2;
+        int time = 0;
+        int price = 0;
+        sstring common;
+    };
+
+    static inline bool cmp_transfer(const Transfer &a, const Transfer &b, bool time) { //return a<b
+        if (a.time == b.time && a.price == b.price) return a.id1 == b.id1 ? a.id2 < b.id2 : a.id1 < b.id1;
+        if (time) return a.time == b.time ? a.price < b.price : a.time < b.time;
+        else return a.price == b.price ? a.time < b.time : a.price < b.price;
+    }
 };
 
 void TrainSystem::output_query_train(const Train &train, const TrainSystem::Seat &seat, const Date &date) {
@@ -450,5 +472,103 @@ bool TrainSystem::search_train_info(const Train &train, const TrainSystem::sstri
     return false;
 }
 
+void TrainSystem::query_transfer(const std::string &s, const std::string &t, const Date &date, bool sortInTime) {
+    if (s == t) sjtu::error("query_transfer chaos: from same to same");
+    sstring from(s), to(t);
+    vector<Stop> stops1, stops2;
+    stop_multimap.find(from, stops1); //ascending in {id,startDate}
+    stop_multimap.find(to, stops2);
+    if (stops1.empty() || stops2.empty()) {
+        std::cout << "0\n";
+        return;
+    }
+    TransferMap<transferInfo> hashmap_station;
+    for (const auto &stop: stops1) {
+        if (stop.leave.date != date) continue;
+        Train train = released_trains[stop.id];
+        int price = 0;
+        int timecost = 0;
+        Date_Time leave = stop.leave;
+        for (int i = stop.index + 1; i < train.stationNum; ++i) { //i-1 -> i
+            price += train.prices[i - 1];
+            timecost += train.travelTimes[i - 1]; //arrive
+            hashmap_station.insert(train.stations[i].hash(), transferInfo{leave + timecost, timecost, price, stop.id});
+            timecost += train.stopoverTimes[i - 1];
+        }
+    }
+    Transfer *best = nullptr, tmp;
+    Train train;
+    ustring lastID; //prevent repeated BPT search
+    for (const auto &stop: stops2) {
+        if (stop.arrive.date < date) continue;
+        if (stop.id != lastID) { //new id
+            train = released_trains[stop.id];
+            lastID = stop.id;
+        }
+        int price = 0;
+        int timecost = 0;
+        Date_Time leave = stop.arrive;
+        for (int i = stop.index - 1; i >= 0; --i) { //i -> i+1
+            price += train.prices[i];
+            timecost += train.travelTimes[i];
+            leave -= train.travelTimes[i]; //leaving time of station[i]
+            // processing
+            if (hashmap_station.has(train.stations[i].hash())) {
+                auto p = hashmap_station.query(train.stations[i].hash());
+                for (const auto &info: *p) {
+                    if (info.arrive > leave) continue;
+                    if (info.id == stop.id) continue;
+                    tmp = {info.id, stop.id, info.timecost + timecost + (leave - info.arrive),
+                           info.cost + price, train.stations[stop.index]};
+                    if (best == nullptr) best = new Transfer(tmp); //init
+                    else if (cmp_transfer(tmp, *best, sortInTime))
+                        *best = tmp; //update
+                }
+            }
+            timecost += train.stopoverTimes[i];
+            leave -= train.stopoverTimes[i]; //arriving time of station[i]
+        }
+    }
+    if (best == nullptr) {
+        std::cout << "0\n";
+        return;
+    }
+    //now we got best transfer
+    //read train1 & train2
+    Train train1 = released_trains[best->id1];
+    Train train2 = released_trains[best->id2];
+    //search_train_info with from & to & common
+    int l1, l2, r1, r2;
+    Date_Time st1, st2, ed1, ed2;
+    search_train_info(train1, from, best->common, l1, r1, st1, ed1);
+    search_train_info(train2, best->common, to, l2, r2, st2, ed2);
+    //output train1
+    int price = train1.getPrice(l1, r1 - 1);
+    int dayAfterBegin = date - st1.date;
+    st1.date += dayAfterBegin; //st1.d = date
+    ed1.date += dayAfterBegin;
+    Date startDate = train1.beginDate + dayAfterBegin;
+    if (startDate < train1.beginDate || startDate > train1.endDate) {
+        sjtu::error("query_transfer chaos1: best transfer found but wrong");
+    } //safety check
+    Seat seat = seats_map[Index{best->id1, startDate}];
+    int seatNum = seat.min(l1, r1 - 1);
+    std::cout << best->id1 << ' ' << s << ' ' << st1 << " -> " << best->common << ' '
+              << ed1 << ' ' << price << ' ' << seatNum << '\n';
+    //output train2
+    price = train2.getPrice(l2, r2 - 1);
+    dayAfterBegin = ed1.date - st2.date + (ed1.time >= st2.time); //ed1->st2, st2.d = ed1.d + (ed1.t>=st2.t)
+    st2.date += dayAfterBegin;
+    ed2.date += dayAfterBegin;
+    startDate = train2.beginDate + dayAfterBegin;
+    if (startDate < train2.beginDate || startDate > train2.endDate) {
+        sjtu::error("query_transfer chaos2: best transfer found but wrong");
+    } //safety check
+    seat = seats_map[Index{best->id2,startDate}];
+    seatNum = seat.min(l2, r2 - 1);
+    std::cout << best->id2 << ' ' << best->common << ' ' << st2 << " -> " << t << ' '
+              << ed2 << ' ' << price << ' ' << seatNum << '\n';
+    delete best;
+}
 
 #endif //TICKET_SYSTEM_TRAIN_SYSTEM_H
