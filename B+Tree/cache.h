@@ -5,7 +5,7 @@
 #include <fstream>
 #include "../STLite/exceptions.hpp"
 
-template<size_t N = 2017>
+template<size_t N = 599>
 struct HashMapL { //hash-map: long->int
 private:
     int begin[N]{0}, next[N]{0}, val[N]{0}, waste[N]{0}, cnt = 0, waste_top = 0, size_ = 0;
@@ -83,7 +83,7 @@ private:
     std::fstream file;
 };
 
-template<class T, size_t N = 64>
+template<class T, size_t N = 32>
 class Cache { //LRU
 private:
     HashMapL<> index;

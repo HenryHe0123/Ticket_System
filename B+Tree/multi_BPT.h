@@ -510,7 +510,7 @@ namespace my {
             faNode.ptr[faNode.size + 1] = 0;
             writeNode(node.fa, faNode);
             writeNode(address, node);
-            writeNode(right_pos, Node());
+            //writeNode(right_pos, Node());
         } else if (left_pos) {
             mergeLeafNode(leftNode, node);
             for (int j = i; j < faNode.size - 1; ++j) {
@@ -522,7 +522,7 @@ namespace my {
             faNode.ptr[faNode.size + 1] = 0;
             writeNode(node.fa, faNode);
             writeNode(left_pos, leftNode);
-            writeNode(address, Node());
+            //writeNode(address, Node());
         } else {
             std::cout << "erase adjust error: no siblings" << std::endl;
             throw sjtu::bpt_error();
@@ -542,7 +542,7 @@ namespace my {
                 readNode(root_pos, root);
                 root.fa = 0;
                 writeNode(root_pos, root);
-                writeNode(address, Node());
+                //writeNode(address, Node());
             } else if (&node != &root) root = node;
             return;
         }
@@ -633,7 +633,7 @@ namespace my {
             faNode.ptr[faNode.size + 1] = 0;
             writeNode(node.fa, faNode);
             writeNode(address, node);
-            writeNode(right_pos, Node());
+            //writeNode(right_pos, Node());
         } else if (left_pos) {
             leftNode.e[leftNode.size] = faNode.e[i];
             leftNode.ptr[leftNode.size + 1] = node.ptr[0];
@@ -659,7 +659,7 @@ namespace my {
             faNode.ptr[faNode.size + 1] = 0;
             writeNode(node.fa, faNode);
             writeNode(left_pos, leftNode);
-            writeNode(address, Node());
+            //writeNode(address, Node());
         } else {
             std::cout << "erase adjust internal error: no siblings" << std::endl;
             throw sjtu::bpt_error();
