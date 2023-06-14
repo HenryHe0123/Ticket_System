@@ -85,7 +85,7 @@ private:
 
 //Cache for file
 
-template<class T, size_t N = 48>
+template<class T, size_t N = 40>
 class Cache { //LRU
 private:
     HashMapL<> index;
