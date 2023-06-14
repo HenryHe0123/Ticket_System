@@ -75,7 +75,10 @@ public:
         file.read(reinterpret_cast <char *> (&value), sizeof(T));
     }
 
-    inline void open(const std::string &name) { file.open(name); }
+    inline void open(const std::string &name) {
+        file.open(name);
+        if (!file) sjtu::error("editor open fail");
+    }
 
     inline void close() { file.close(); }
 
@@ -85,7 +88,7 @@ private:
 
 //Cache for file
 
-template<class T, size_t N = 36>
+template<class T, size_t N = 24>
 class Cache { //LRU
 private:
     HashMapL<> index;
@@ -161,9 +164,36 @@ public:
         return val[tmp];
     }
 
+
+    void addNew(long addr, const T &value) { //add value to cache
+        int tmp; //new index for v
+        if (size == N) {
+            f.write(pos[tail], val[tail]);
+            index.del(pos[tail], tail); //release previous tail
+            tmp = tail;
+            tail = pre[tail];
+            to[tail] = -1; //get tmp out of tail
+            pre[head] = tmp;
+            pre[tmp] = -1;
+            to[tmp] = head;
+            head = tmp; //add tmp to head
+        } else {
+            tmp = size++;
+            if (~head) { //not empty
+                pre[head] = tmp;
+                to[tmp] = head;
+            } else tail = tmp;
+            head = tmp;
+        } //now tmp available for v as head
+        pos[tmp] = addr;
+        index.insert(addr, tmp);
+        val[tmp] = value;
+    }
+
 };
 
-//Cache for internal
+
+//---------------Cache for internal---------------------------------------------------
 
 template<class T, size_t N = 48>
 class InterCache { //LRU

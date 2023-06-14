@@ -43,7 +43,7 @@ namespace my {
     protected:
         fstream file;
         long endAddress = sizeof(long);
-        //Cache<value_type, 128> cache;
+        Cache<value_type, 64> cache;
     };
 
 //----------------------------------------------------------------------------
@@ -62,6 +62,7 @@ namespace my {
             file.close();
             file.open(name);
         }
+        cache.init(name);
     }
 
 
@@ -69,20 +70,22 @@ namespace my {
     long File<value_type>::add(const value_type &value) {
         file.seekp(endAddress);
         file.write(reinterpret_cast <const char *> (&value), sizeof(value_type));
+        cache.addNew(endAddress, value);
         endAddress += sizeof(value_type);
         return endAddress - sizeof(value_type);
     }
 
     template<class value_type>
     void File<value_type>::write(long address, const value_type &value) {
+        if (cache.has(address)) cache.get(address) = value;
         file.seekp(address);
         file.write(reinterpret_cast <const char *> (&value), sizeof(value_type));
     }
 
     template<class value_type>
     void File<value_type>::read(long address, value_type &value) {
-        file.seekg(address);
-        file.read(reinterpret_cast <char *> (&value), sizeof(value_type));
+        if (cache.has(address)) value = cache.get(address);
+        else value = cache.getNew(address);
     }
 
     template<class value_type>
@@ -92,6 +95,7 @@ namespace my {
 
     template<class value_type>
     void File<value_type>::clear() {
+        cache.clear();
         endAddress = sizeof(long);
     }
 
