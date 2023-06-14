@@ -54,7 +54,7 @@ public:
         return false;
     }
 
-    int &operator[](long address) {
+    int operator[](long address) {
         for (int i = begin[address % N]; i; i = next[i]) if (addr[i] == address) return val[i];
         sjtu::error("HashMapL[address] error: address no find");
     }
@@ -85,7 +85,7 @@ private:
 
 //Cache for file
 
-template<class T, size_t N = 40>
+template<class T, size_t N = 36>
 class Cache { //LRU
 private:
     HashMapL<> index;
@@ -104,12 +104,22 @@ public:
         f.close();
     }
 
+    inline void clear() {
+        index.clear();
+        memset(pre, -1, sizeof(pre));
+        memset(to, -1, sizeof(to));
+        memset(pos, 0, sizeof(pos));
+        head = tail = -1;
+        size = 0;
+    }
+
     inline void init(const std::string &name) { f.open(name); } //need init before use
 
     bool has(long addr) { return index.has(addr); }
 
     T &operator[](long addr) { //address must already have stored value
-        return index.has(addr) ? get(addr) : getNew(addr);
+        if (index.has(addr)) return get(addr);
+        else return getNew(addr);
     }
 
     T &get(long addr) { //addr already in index
@@ -125,7 +135,6 @@ public:
         return val[i];
     }
 
-private:
     T &getNew(long addr) { //addr not in index (but exist)
         int tmp; //new index for v
         if (size == N) {

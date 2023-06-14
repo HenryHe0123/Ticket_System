@@ -68,6 +68,7 @@ namespace my {
             endAddress = firstNodeAddress;
             size_ = 0;
             data.clear();
+            cache.clear();
         }
 
         void executeAll(void (*func)(const K &key, const T &value));
@@ -84,7 +85,7 @@ namespace my {
         inline void getData(long address, T &output) const { data.read(address, output); }
 
     private:
-        constexpr static int halfBlockSize = 4000 / (sizeof(long) + sizeof(K));
+        constexpr static int halfBlockSize = 1950 / (sizeof(long) + sizeof(K));
 
         constexpr static int Degree = halfBlockSize << 1 | 1; //odd number required here
         //we keep one empty space for split
