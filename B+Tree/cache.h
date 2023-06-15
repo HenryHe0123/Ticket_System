@@ -196,7 +196,7 @@ public:
 //---------------Cache for internal---------------------------------------------------
 
 template<class T, size_t N = 48>
-class InterCache { //LRU
+class [[maybe_unused]] InterCache { //LRU
 private:
     HashMapL<1013> index; //hash as address
     T val[N]{};

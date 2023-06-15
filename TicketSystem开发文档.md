@@ -11,7 +11,13 @@
 
 ##### User System
 
-略
+```c++
+class UserSystem {
+    using ustring = my::string<20>;
+    my::BPT<ustring, User> user_map;
+    sjtu::map<ustring, int> user_login; //store privilege in int
+};
+```
 
 ##### Train System
 
@@ -27,6 +33,10 @@ class Train {
     Date beginDate, endDate; //saleDate
     char type = 0;
 } //外部类
+class TrainSystem {
+    using ustring = my::string<20>;
+    using sstring = my::string<30>;
+private:
 my::BPT<ustring, Train> train_map; //未发布火车信息
 my::BPT<ustring, Train> released_trains;//已发布火车信息
 //不包含座位信息
@@ -50,6 +60,7 @@ my::multiBPT<ustring, Order> order_u; //记录每个用户的所有订单
 my::multiBPT<Index, Order> pending_order; //记录候补队列
 struct transferInfo; //火车id，抵达时间，花费时间，价格（用于transfer查询中的匹配）
 struct Transfer; //id1，id2，总时间，总价格，换乘站，换乘等待时间
+};
 ```
 
 #### 关键函数逻辑说明

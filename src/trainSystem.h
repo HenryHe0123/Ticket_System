@@ -441,33 +441,6 @@ private:
         else return a.price == b.price ? a.time < b.time : a.price < b.price;
     }
 
-    //------------------------------------------------
-    /*
-    InterCache<Train> released_train_cache;
-
-    bool find_released_train(const ustring &id, Train &train) {
-        int hash = id.hash();
-        if (released_train_cache.has(hash)) {
-            train = released_train_cache.get(hash);
-            return true;
-        } else if (released_trains.find(id, train)) {
-            released_train_cache.add(hash, train);
-            return true;
-        } else return false;
-    }
-
-    Train released_train(const ustring &id) {
-        int hash = id.hash();
-        if (released_train_cache.has(hash)) return released_train_cache.get(hash);
-        else {
-            Train train;
-            released_trains.find(id, train);
-            released_train_cache.add(hash, train);
-            return train;
-        }
-    }
-     */
-
 };
 
 //-------------------------------------------------------------------
