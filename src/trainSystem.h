@@ -156,10 +156,10 @@ public:
             Date startDate = tmp1.beginDate + dayAfterBegin;
             if (startDate < tmp1.beginDate || startDate > tmp1.endDate) continue; //check improper date
             //available train
-            tmp1.arrive.date += dayAfterBegin;
+            //tmp1.arrive.date += dayAfterBegin;
             tmp1.leave.date += dayAfterBegin;
             tmp2.arrive.date += dayAfterBegin;
-            tmp2.leave.date += dayAfterBegin;
+            //tmp2.leave.date += dayAfterBegin;
             //tmp not going to be used again
             Train train = released_trains[tmp1.id];
             int price = train.getPrice(tmp1.index, tmp2.index - 1);

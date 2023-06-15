@@ -85,7 +85,7 @@ namespace my {
         inline void getData(long address, T &output) const { data.read(address, output); }
 
     private:
-        constexpr static int halfBlockSize = 1950 / (sizeof(long) + sizeof(K));
+        constexpr static int halfBlockSize = 2000 / (sizeof(long) + sizeof(K));
 
         constexpr static int Degree = halfBlockSize << 1 | 1; //odd number required here
         //we keep one empty space for split
@@ -167,6 +167,7 @@ namespace my {
             else {
                 file.seekp(address);
                 file.write(reinterpret_cast<const char *>(&node), sizeof(Node));
+                cache.addNew(address,node);
             }
         }
 
@@ -255,6 +256,7 @@ namespace my {
             file.open(name);
         }
         cache.init(name);
+        if(root_pos) cache.getNew(root_pos);
     }
 
     template<class K, class T>
