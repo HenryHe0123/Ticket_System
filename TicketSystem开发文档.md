@@ -32,7 +32,7 @@ my::BPT<ustring, Train> released_trains;//已发布火车信息
 //不包含座位信息
 struct Seat; //一个记录座位剩余的int数组remain 
 struct Index; //作为查询火车其他信息的索引(火车id，出发日期)
-struct Stop; //存储火车停靠站信息(id，站台index，到达和离开时间，列车出发时间)
+struct Stop; //存储火车停靠站信息(id，站台index，到达和离开时间(第一天)，列车出发区间)
 my::BPT<Index, Seat> seats_map; 
 my::multiBPT<sstring, Stop> stop_multimap;
 //只记录已发布火车座位信息
@@ -54,9 +54,14 @@ struct Transfer; //id1，id2，总时间，总价格，换乘站，换乘等待�
 
 #### 关键函数逻辑说明
 
+##### query_ticket
+
+查询起始和终点站的所有火车停靠信息（按火车id递增），用双指针匹配对应火车：
+
+先检查火车id是否对应以及站点次序是否正确，然后确定火车出发时间（检查是否在发售时间内），获取ticket加入vector。最后排序输出。
+
 ##### query_transfer
 
 首先查询起始和终点站的所有火车停靠信息，遍历经过起始站的所有火车的后续站，并用hash-map存储信息（key: 站名，val:  vector<火车id，抵达时间，花费时间，价格>）。
 
 再遍历经过终点站的所有火车的前序站，检查是否在hash-map中存在，若存在则读取vector（的指针），检查每辆火车的时间是否合适，并更新最优解。
-

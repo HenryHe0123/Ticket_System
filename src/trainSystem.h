@@ -86,24 +86,25 @@ public:
         Seat seat(train);
         Index index;
         index.id = id;
-        Stop stop(i);
         for (Date date = train.beginDate; date <= train.endDate; ++date) {
             index.date = date;
             seats_map.assign(index, seat);
-            Date_Time t = {date, train.startTime};
-            stop.index = 0;
-            stop.startDate = date;
-            stop.arrive = stop.leave = t;
-            stop_multimap.insert(train.stations[0], stop);
-            t += train.travelTimes[0];
-            for (int j = 1; j < train.stationNum; ++j) {
-                stop.index = j;
-                stop.arrive = t;
-                if (j != train.stationNum - 1) t += train.stopoverTimes[j - 1];
-                stop.leave = t;
-                stop_multimap.insert(train.stations[j], stop);
-                t += train.travelTimes[j];
-            }
+        }
+        Stop stop(i);
+        stop.beginDate = train.beginDate;
+        stop.endDate = train.endDate;
+        Date_Time t = {train.beginDate, train.startTime};
+        stop.index = 0;
+        stop.arrive = stop.leave = t;
+        stop_multimap.insert(train.stations[0], stop);
+        t += train.travelTimes[0];
+        for (int j = 1; j < train.stationNum; ++j) {
+            stop.index = j;
+            stop.arrive = t;
+            if (j != train.stationNum - 1) t += train.stopoverTimes[j - 1];
+            stop.leave = t;
+            stop_multimap.insert(train.stations[j], stop);
+            t += train.travelTimes[j];
         }
         return 0;
     }
@@ -136,7 +137,7 @@ public:
         if (s == t) sjtu::error("query_ticket chaos: from same to same");
         sstring from(s), to(t);
         vector<Stop> stop1, stop2;
-        stop_multimap.find(from, stop1); //ascending in {id,startDate}
+        stop_multimap.find(from, stop1); //ascending in id
         stop_multimap.find(to, stop2);
         if (stop1.empty() || stop2.empty()) {
             std::cout << "0\n";
@@ -144,17 +145,25 @@ public:
         }
         vector<Ticket> tickets;
         auto it2 = stop2.begin();
-        for (const auto &tmp1: stop1) {
-            if (tmp1.leave.date != date) continue;
+        for (auto &tmp1: stop1) {
             while (it2 != stop2.end() && *it2 < tmp1) ++it2;
             if (it2 == stop2.end()) break;
             Stop tmp2 = *it2;
             if (tmp1 != tmp2) continue;
             if (tmp2.index < tmp1.index) continue;
+            //get startDate
+            int dayAfterBegin = date - tmp1.leave.date;
+            Date startDate = tmp1.beginDate + dayAfterBegin;
+            if (startDate < tmp1.beginDate || startDate > tmp1.endDate) continue; //check improper date
             //available train
+            tmp1.arrive.date += dayAfterBegin;
+            tmp1.leave.date += dayAfterBegin;
+            tmp2.arrive.date += dayAfterBegin;
+            tmp2.leave.date += dayAfterBegin;
+            //tmp not going to be used again
             Train train = released_trains[tmp1.id];
             int price = train.getPrice(tmp1.index, tmp2.index - 1);
-            Seat seat = seats_map[Index{tmp1.id, tmp1.startDate}];
+            Seat seat = seats_map[Index{tmp1.id, startDate}];
             int seatNum = seat.min(tmp1.index, tmp2.index - 1);
             Ticket ticket(tmp1.id, tmp1.leave, tmp2.arrive, price, seatNum);
             tickets.push_back(ticket);
@@ -297,7 +306,7 @@ private:
 
     struct Stop {
         ustring id;
-        Date startDate; //train start date
+        Date beginDate, endDate; //train start date
         int index = 0; //station = train_map[id].stations[index]
         Date_Time arrive, leave;
 
@@ -308,24 +317,24 @@ private:
         explicit Stop(const ustring &id) : id(id) {}
 
         inline bool operator<(const Stop &stop) const {
-            return id == stop.id ? startDate < stop.startDate : id < stop.id;
+            return id < stop.id;
         }
 
         inline bool operator>(const Stop &stop) const {
-            return id == stop.id ? startDate > stop.startDate : id > stop.id;
+            return id > stop.id;
         }
 
         inline bool operator>=(const Stop &stop) const {
-            return id == stop.id ? startDate >= stop.startDate : id > stop.id;
+            return id >= stop.id;
         }
 
         inline bool operator<=(const Stop &stop) const {
-            return id == stop.id ? startDate <= stop.startDate : id < stop.id;
+            return id <= stop.id;
         }
 
-        inline bool operator!=(const Stop &stop) const { return id != stop.id || startDate != stop.startDate; }
+        inline bool operator!=(const Stop &stop) const { return id != stop.id; }
 
-        inline bool operator==(const Stop &stop) const { return id == stop.id && startDate == stop.startDate; }
+        inline bool operator==(const Stop &stop) const { return id == stop.id; }
 
         friend std::ostream &operator<<(std::ostream &os, const Stop &stop) {
             os << stop.arrive << " -> " << stop.leave;
@@ -517,8 +526,15 @@ void TrainSystem::query_transfer(const std::string &s, const std::string &t, con
         return;
     }
     TransferMap<transferInfo> hashmap_station;
-    for (const auto &stop: stops1) {
-        if (stop.leave.date != date) continue;
+    for (auto &stop: stops1) {
+        //if (stop.leave.date != date) continue;
+
+        int dayAfterBegin = date - stop.leave.date;
+        Date startDate = stop.beginDate + dayAfterBegin;
+        if (startDate < stop.beginDate || startDate > stop.endDate) continue; //check improper date
+        stop.arrive.date += dayAfterBegin;
+        stop.leave.date += dayAfterBegin;
+
         Train train = released_trains[stop.id];
         int price = 0;
         int timecost = 0;
@@ -533,39 +549,43 @@ void TrainSystem::query_transfer(const std::string &s, const std::string &t, con
     Transfer *best = nullptr, tmp;
     Train train;
     ustring lastID; //prevent repeated BPT search
-    for (const auto &stop: stops2) {
-        if (stop.arrive.date < date) continue;
-        if (stop.id != lastID) { //new id
-            train = released_trains[stop.id];
-            lastID = stop.id;
-        }
-        int price = 0;
-        int timecost = 0;
-        Date_Time leave = stop.arrive;
-        for (int i = stop.index - 1; i >= 0; --i) { //i -> i+1
-            price += train.prices[i];
-            timecost += train.travelTimes[i];
-            leave -= train.travelTimes[i]; //leaving time of station[i]
-            // processing
-            if (hashmap_station.has(train.stations[i].hash())) {
-                auto p = hashmap_station.query(train.stations[i].hash());
-                for (const auto &info: *p) {
-                    int waitTime = leave - info.arrive;
-                    if (waitTime < 0) continue;
-                    if (info.id == stop.id) continue;
-                    tmp = {info.id, stop.id, info.timecost + timecost + waitTime,
-                           info.cost + price, train.stations[i], waitTime};
-                    if (best == nullptr) best = new Transfer(tmp); //init
-                    else if (cmp_transfer(tmp, *best, sortInTime))
-                        *best = tmp; //update
+    for (auto &stop: stops2) {
+        int tot = stop.endDate - stop.beginDate;
+        for (int j = 0; j <= tot; ++j, ++stop.arrive.date, ++stop.leave.date) {
+            if (stop.arrive.date < date) continue;
+            if (stop.id != lastID) { //new id
+                train = released_trains[stop.id];
+                lastID = stop.id;
+            }
+            int price = 0;
+            int timecost = 0;
+            Date_Time leave = stop.arrive;
+            for (int i = stop.index - 1; i >= 0; --i) { //i -> i+1
+                price += train.prices[i];
+                timecost += train.travelTimes[i];
+                leave -= train.travelTimes[i]; //leaving time of station[i]
+                // processing
+                if (hashmap_station.has(train.stations[i].hash())) {
+                    auto p = hashmap_station.query(train.stations[i].hash());
+                    for (const auto &info: *p) {
+                        int waitTime = leave - info.arrive;
+                        if (waitTime < 0) continue;
+                        if (info.id == stop.id) continue;
+                        tmp = {info.id, stop.id, info.timecost + timecost + waitTime,
+                               info.cost + price, train.stations[i], waitTime};
+                        if (best == nullptr) best = new Transfer(tmp); //init
+                        else if (cmp_transfer(tmp, *best, sortInTime))
+                            *best = tmp; //update
+                    }
+                }
+                if (i) {
+                    timecost += train.stopoverTimes[i - 1];
+                    leave -= train.stopoverTimes[i - 1]; //arriving time of station[i]
+                    //stopoverTime[i] represent stop time in i+1 and i+2
                 }
             }
-            if (i) {
-                timecost += train.stopoverTimes[i - 1];
-                leave -= train.stopoverTimes[i - 1]; //arriving time of station[i]
-                //stopoverTime[i] represent stop time in i+1 and i+2
-            }
         }
+
     }
     if (best == nullptr) {
         std::cout << "0\n";
