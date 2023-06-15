@@ -43,7 +43,7 @@ namespace my {
     protected:
         fstream file;
         long endAddress = sizeof(long);
-        Cache<value_type, 32> cache;
+        Cache<value_type> cache;
     };
 
 //----------------------------------------------------------------------------
